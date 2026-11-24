@@ -1,0 +1,21 @@
+css/style.css
+  s_62672facbf17c2::t_44d5025ccd35d0 305-306,308,317
+js/poster.js
+  s_62672facbf17c2::t_194f39cdece1c9 236,238-240,242-243,248,259,264,266,269,271,274-275,279,294,299,317,319,325,329,331,333,336,338,341,343,345-346,349
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "a9e8af54188f5c499abec349c752bbc0d856675b",
+  "prompts": {},
+  "sessions": {
+    "s_62672facbf17c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3846b109-1323-4c9d-bb7a-546d577a3bd5",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
