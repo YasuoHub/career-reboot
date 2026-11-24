@@ -72,9 +72,17 @@ const patterns = [
     }
 
     await page.click('#btn-start');
-    for (let i = 0; i < 8; i++) {
-      await page.waitForSelector('.q-panel .opt >> nth=0', { timeout: 5000 });
-      await page.locator('.q-panel .opt').nth(answers[QUESTIONS[i].id]).click();
+    for (let i = 0; i < QUESTIONS.length; i++) {
+      const q = QUESTIONS[i];
+      if (q.multi) {
+        // 多选：勾第一个选项后确认
+        await page.waitForSelector('.multi-opts .opt-chip >> nth=0', { timeout: 5000 });
+        await page.locator('.multi-opts .opt-chip').first().click();
+        await page.click('#btn-multi');
+      } else {
+        await page.waitForSelector('.q-panel .opt >> nth=0', { timeout: 5000 });
+        await page.locator('.q-panel .opt').nth(answers[q.id] !== undefined ? answers[q.id] : 0).click();
+      }
       await page.waitForTimeout(200);
     }
     try {
