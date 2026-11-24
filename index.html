@@ -13,7 +13,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./css/style.css?v=6" />
+  <link rel="stylesheet" href="./css/style.css?v=7" />
 </head>
 <body>
   <!-- 首屏加载层（关键样式内联，主样式未就绪也安全；JS 侧有移除兜底） -->
@@ -90,18 +90,19 @@
     <div class="modal-mask" data-close></div>
     <div class="modal-card">
       <img id="poster-img" alt="分享海报" />
-      <p class="modal-hint">长按图片保存，或点「下载到手机」后发朋友圈</p>
+      <p class="modal-hint">最稳的保存方式：<b>长按上方图片</b> → 存到手机</p>
       <div class="modal-btns">
-        <a id="poster-download" class="btn btn-primary" download>下载到手机</a>
-        <button id="poster-share" class="btn btn-ghost">复制链接去分享</button>
+        <a id="poster-download" class="btn btn-primary" download>保存图片</a>
+        <button id="poster-share" class="btn btn-ghost">复制链接</button>
       </div>
+      <p class="link-copy" id="link-copy"></p>
     </div>
   </div>
 
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <script src="./js/data.js?v=6"></script>
-  <script src="./js/poster.js?v=6"></script>
-  <script src="./js/app.js?v=6"></script>
+  <script src="./js/data.js?v=7"></script>
+  <script src="./js/poster.js?v=7"></script>
+  <script src="./js/app.js?v=7"></script>
 </body>
 </html>
