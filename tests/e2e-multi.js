@@ -1,14 +1,12 @@
-/* 多原型线上回归（真实浏览器点击，Playwright）
+/* 多原型线上回归（真实浏览器点击，Playwright）· v3·16型
  *
  * 运行前提：
  *   1) npm i playwright（或复用本机已有安装）
- *   2) 无头内核未装时改用系统 Chrome：
- *      chromium.launch({ channel: 'chrome' })
- *   3) 本地/线上地址切换：把 URL 常量改成 'https://www.career-turn.icu'
- *      （本地时去掉 URL 参数，直接 window.open 相对路径亦可）
+ *   2) 无头内核未装时改用系统 Chrome：chromium.launch({ channel: 'chrome' })
+ *   3) 本地/线上地址切换：把 URL 常量改成你的地址
  *
- * 校验内容：8 大原型 + 2 组混答，每组走完整答题→结果页，
- * 断言页面无 JS 错误且结果原型名与离线复算一致。
+ * 校验内容：构造覆盖 4 组二值判别维度边界的代表答案组合，
+ * 走完整答题→结果页，断言无 JS 错误且原型名与离线 classify() 一致。
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -16,32 +14,44 @@ const path = require('path');
 
 global.window = {};
 eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'data.js'), 'utf8'));
-const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES } = window.RB_DATA;
+const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, CLASSIFY_DIM } = window.RB_DATA;
 
 function detect(a) {
   const d = {};
   QUESTIONS.forEach(q => { const o = q.opts[a[q.id]]; if (!o) return;
     if (o.add && o.add.dims) Object.entries(o.add.dims).forEach(([k, v]) => (d[k] = (d[k] || 0) + v)); });
   const n = {}; AXES.forEach(x => n[x.key] = Math.round(((d[x.key] || 0) / AXES_MAX[x.key]) * 100));
-  const r = [...AXES].sort((x, y) => n[y.key] - n[x.key]);
-  let id = r[0].key;
-  for (const [iid, ac] of Object.entries(ARCHETYPES))
-    if (ac.combo && ac.combo.includes(r[0].key) && ac.combo.includes(r[1].key) && n[r[1].key] >= n[r[0].key] * 0.55) id = iid;
+  // 16型 classify 四组二值判别
+  const ext = CLASSIFY_DIM.D1_ext(n);
+  const intui = CLASSIFY_DIM.D2_intu(n);
+  const drv = CLASSIFY_DIM.D3_drv(n);
+  const orch = CLASSIFY_DIM.D4_orch(n);
+  const id = `${ext ? 'e' : 'i'}${intui ? 'in' : 'at'}${drv ? 'jp' : 'sj'}${orch ? '1' : '2'}`;
   return id;
 }
 
 const URL = process.env.SITE_URL || 'https://www.career-turn.icu';
 
+/* 构造代表答案：每组拼出不同四值组合 */
+function mk(patch) { const a = {}; QUESTIONS.forEach(q => a[q.id] = 1); Object.assign(a, patch); return a; }
+
+// 基础全1分 → 各轴均分；再叠加单轴偏置看分类漂移
 const patterns = [
-  ['解题人', { q3: 0, q4: 0, q5: 0 }],
-  ['造物者', { q3: 3, q4: 2, q5: 1 }],
-  ['造梦师', { q3: 2, q4: 1, q5: 2 }],
-  ['连接人', { q3: 4, q4: 3, q5: 3 }],
-  ['破局者', { q3: 1, q6: 2, q8: 0 }],
-  ['定盘星', { q3: 1, q6: 0, q8: 1 }],
-  ['架构师', { q3: 3, q4: 0, q5: 1 }],
-  ['舞台派', { q3: 2, q4: 3, q5: 2, q8: 3 }],
+  // 全1基线（无偏置）→ 应稳定落在一型
+  ['基线-全1', {}],
+  // 高social偏置 → D1外向
+  ['高社交', { q3: 4, q4: 3, q5: 3, q8: 3 }],
+  // 高analytic+maker偏置 → D2分析侧/D3驱动侧（leader也高时偏驱动）
+  ['高分析', { q3: 0, q4: 0, q5: 0 }],
+  // 高creative+social偏置 → D2直觉侧
+  ['高直觉', { q3: 2, q4: 1, q5: 2 }],
+  // 高stable偏置 → D4守序侧
+  ['高稳定', { q3: 1, q6: 0, q8: 1 }],
+  // 高leader偏置 → D3驱动侧
+  ['高驱动', { q3: 1, q6: 2, q8: 0 }],
+  // 混答A
   ['混答A',  { q1: 2, q2: 2, q3: 0, q4: 1, q5: 0, q6: 1, q7: 1, q8: 2 }],
+  // 混答B
   ['混答B',  { q1: 0, q2: 1, q3: 4, q4: 2, q5: 3, q6: 2, q7: 2, q8: 3 }],
 ];
 
