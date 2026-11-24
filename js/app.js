@@ -132,7 +132,7 @@
     const c2 = intui ? 'in' : 'at';       // creative≥analytic→in(直觉), 否则 at(分析+直觉)
     const c3 = drv ? 'jp' : 'sj';         // leader最高→jp(驱动), 否则 sj(支撑)
     const c4 = orch ? '1' : '2';          // stable≥55→1(守序), 否则2(灵活)
-    return `${e}${c2}${c3}${c4}`;          // 如 ei_at_jp_1
+    return `${ext ? 'ei' : 'ii'}_${intui ? 'in' : 'at'}_${drv ? 'jp' : 'sj'}_${orch ? '1' : '2'}`;          // 如 ei_at_jp_1
   }
 
   /* ---------- 打分引擎 ---------- */
