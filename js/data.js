@@ -115,7 +115,7 @@ const AXES_MAX = { analytic: 7, maker: 10, creative: 10, social: 9, leader: 7, s
 /* ---------------- 八大原型 ----------------
    combo: 双高合成型（配第二高维度达成） */
 const ARCHETYPES = {
-  analyst: {
+  analytic: {
     num: '01', cn: '解题人', en: 'The Analyst',
     slogan: '万物皆可拆解，是你给混乱开的药方。',
     keywords: ['结构化思维', '数据敏感', '逻辑闭环'],
@@ -129,28 +129,28 @@ const ARCHETYPES = {
     rarity: 14,
     colors: { accent: '#ffb020', deep: '#6b430d', glow: 'rgba(255,176,32,.3)' },
   },
-  dreamer: {
+  creative: {
     num: '03', cn: '造梦师', en: 'The Dreamer',
     slogan: '生活太素？你负责给它加滤镜。',
     keywords: ['审美在线', '内容直觉', '表达欲'],
     rarity: 9,
     colors: { accent: '#f06bf0', deep: '#5c1455', glow: 'rgba(240,107,240,.3)' },
   },
-  connector: {
+  social: {
     num: '04', cn: '连接人', en: 'The Connector',
     slogan: '房间因为你开场，人心因为你破冰。',
     keywords: ['关系资产', '场合感', '共情倾听'],
     rarity: 17,
     colors: { accent: '#54c5ff', deep: '#0c4a78', glow: 'rgba(84,197,255,.3)' },
   },
-  disruptor: {
+  leader: {
     num: '05', cn: '破局者', en: 'The Disruptor',
     slogan: '僵局在你手里，都是用来翻盘的。',
     keywords: ['抗压谈判', '资源整合', '结果导向'],
     rarity: 8,
     colors: { accent: '#ff7a59', deep: '#6e2410', glow: 'rgba(255,122,89,.32)' },
   },
-  anchor: {
+  stable: {
     num: '06', cn: '定盘星', en: 'The Anchor',
     slogan: '风浪再大，你的底盘稳得像老树根。',
     keywords: ['流程本能', '风险厌恶', '可靠交付'],
@@ -184,10 +184,10 @@ const ARCHETYPES = {
    week1   第一周就能做的最小行动 */
 const CAREERS = [
   /* 解题人 */
-  { arc: 'analyst', name: '商业/数据分析师', sal: '9k–25k', tags: ['Excel+SQL', '通用性强'], fit: '你的拆解本能天生就是干这个用的。', week1: '拿一份公开财报，用三个图表讲出它的生意逻辑，发出去。' },
-  { arc: 'analyst', name: 'AI 数据训练师', sal: '8k–15k', tags: ['新兴赛道', '门槛友好'], fit: '大模型缺的就是你这种能把标准说清楚的人。', week1: '在标注平台注册一个账号，跑完第一单体验全流程。' },
-  { arc: 'analyst', name: '财务助理→总账会计', sal: '5k–10k', need: { minIncome: 5000, stable: true }, tags: ['越老越值钱'], fit: '数字洁癖是会计的天赋型选手。', week1: '免费学会计基础课第一章，做完课后习题拍照打卡。' },
-  { arc: 'analyst', name: '研究助理/行业研究', sal: '7k–16k', tags: ['知识复利'], fit: '查资料做归纳这件事，你比谁都快乐。', week1: '挑一个你好奇的行业，写一份 1500 字速览放上小红书。' },
+  { arc: 'analytic', name: '商业/数据分析师', sal: '9k–25k', tags: ['Excel+SQL', '通用性强'], fit: '你的拆解本能天生就是干这个用的。', week1: '拿一份公开财报，用三个图表讲出它的生意逻辑，发出去。' },
+  { arc: 'analytic', name: 'AI 数据训练师', sal: '8k–15k', tags: ['新兴赛道', '门槛友好'], fit: '大模型缺的就是你这种能把标准说清楚的人。', week1: '在标注平台注册一个账号，跑完第一单体验全流程。' },
+  { arc: 'analytic', name: '财务助理→总账会计', sal: '5k–10k', need: { minIncome: 5000, stable: true }, tags: ['越老越值钱'], fit: '数字洁癖是会计的天赋型选手。', week1: '免费学会计基础课第一章，做完课后习题拍照打卡。' },
+  { arc: 'analytic', name: '研究助理/行业研究', sal: '7k–16k', tags: ['知识复利'], fit: '查资料做归纳这件事，你比谁都快乐。', week1: '挑一个你好奇的行业，写一份 1500 字速览放上小红书。' },
 
   /* 造物者 */
   { arc: 'maker', name: '自动化测试工程师', sal: '7k–14k', need: { hours: 'mid' }, tags: ['IT 入口岗'], fit: '把东西测到不能崩，靠的就是你的较真劲儿。', week1: '用免费工具给一个常用 App 提 3 条真实 Bug 到社区。' },
@@ -196,28 +196,28 @@ const CAREERS = [
   { arc: 'maker', name: '前端开发（转岗）', sal: '12k–30k', need: { hours: 'high' }, tags: ['高薪', '自学可行'], fit: '代码是新的木工活，逻辑和动手你都有底子。', week1: '跟着免费课写完第一个个人主页，部署上线。' },
 
   /* 造梦师 */
-  { arc: 'dreamer', name: 'AIGC 内容创作者', sal: '5k–18k', need: { risk: true, hours: 'mid' }, tags: ['风口红利'], fit: '审美 + 新工具，你恰好站在时代接口上。', week1: '用 AI 工具做完一组 9 张同系列插画发社交平台。' },
-  { arc: 'dreamer', name: '短视频策划/剪辑', sal: '6k–20k', need: { risk: true }, tags: ['流量型'], fit: '会讲故事的人，永远不缺人要。', week1: '剪一条 60 秒的城市观察片，发两个平台看反馈。' },
-  { arc: 'dreamer', name: 'UI/UX 设计师', sal: '8k–18k', need: { hours: 'mid' }, tags: ['作品集说话'], fit: '美的直觉是可以被系统地训练出来的天赋。', week1: '临摹 3 个优秀页面，产出一份 5P 作品集初稿。' },
-  { arc: 'dreamer', name: '品牌文案/内容主理', sal: '6k–15k', tags: ['写手刚需'], fit: '一句话让人记住，你是天生的广告人。', week1: '为一家小店写 3 篇朋友圈式种草文案给它看。' },
+  { arc: 'creative', name: 'AIGC 内容创作者', sal: '5k–18k', need: { risk: true, hours: 'mid' }, tags: ['风口红利'], fit: '审美 + 新工具，你恰好站在时代接口上。', week1: '用 AI 工具做完一组 9 张同系列插画发社交平台。' },
+  { arc: 'creative', name: '短视频策划/剪辑', sal: '6k–20k', need: { risk: true }, tags: ['流量型'], fit: '会讲故事的人，永远不缺人要。', week1: '剪一条 60 秒的城市观察片，发两个平台看反馈。' },
+  { arc: 'creative', name: 'UI/UX 设计师', sal: '8k–18k', need: { hours: 'mid' }, tags: ['作品集说话'], fit: '美的直觉是可以被系统地训练出来的天赋。', week1: '临摹 3 个优秀页面，产出一份 5P 作品集初稿。' },
+  { arc: 'creative', name: '品牌文案/内容主理', sal: '6k–15k', tags: ['写手刚需'], fit: '一句话让人记住，你是天生的广告人。', week1: '为一家小店写 3 篇朋友圈式种草文案给它看。' },
 
   /* 连接人 */
-  { arc: 'connector', name: 'HRBP/招聘顾问', sal: '8k–16k', tags: ['人脉变现'], fit: '识人是你的本能，HR 是把你的本能变成工资。', week1: '约两位前同事喝咖啡，了解他们现在的真实需求。' },
-  { arc: 'connector', name: '大客户销售/KA', sal: '8k–30k', need: { risk: true }, tags: ['上限极高'], fit: '陪人聊天顺便成交，这份工作就是为你设计的。', week1: '列出 10 个熟人需求清单，本周试着帮一个人的忙。' },
-  { arc: 'connector', name: '社群运营/私域操盘', sal: '6k–12k', tags: ['轻量起步'], fit: '你在场子就热，社群就是要这种引力。', week1: '建一个 20 人小群，围绕共同兴趣运营一周。' },
-  { arc: 'connector', name: '研学/企业培训导师', sal: '5k–12k', need: { hours: 'mid' }, tags: ['演讲型人格'], fit: '讲台记得住每一个让全场笑的人。', week1: '在社区活动报名一次 5 分钟闪电演讲。' },
+  { arc: 'social', name: 'HRBP/招聘顾问', sal: '8k–16k', tags: ['人脉变现'], fit: '识人是你的本能，HR 是把你的本能变成工资。', week1: '约两位前同事喝咖啡，了解他们现在的真实需求。' },
+  { arc: 'social', name: '大客户销售/KA', sal: '8k–30k', need: { risk: true }, tags: ['上限极高'], fit: '陪人聊天顺便成交，这份工作就是为你设计的。', week1: '列出 10 个熟人需求清单，本周试着帮一个人的忙。' },
+  { arc: 'social', name: '社群运营/私域操盘', sal: '6k–12k', tags: ['轻量起步'], fit: '你在场子就热，社群就是要这种引力。', week1: '建一个 20 人小群，围绕共同兴趣运营一周。' },
+  { arc: 'social', name: '研学/企业培训导师', sal: '5k–12k', need: { hours: 'mid' }, tags: ['演讲型人格'], fit: '讲台记得住每一个让全场笑的人。', week1: '在社区活动报名一次 5 分钟闪电演讲。' },
 
   /* 破局者 */
-  { arc: 'disruptor', name: '项目经理/PMO', sal: '12k–28k', tags: ['跨行业通用'], fit: '推得动事情的人，到哪儿都是核心。', week1: '主动认领同事间没人想接的一个麻烦事并推进。' },
-  { arc: 'disruptor', name: '销售主管', sal: '10k–35k', need: { risk: true }, tags: ['管理入门'], fit: '带队伍打仗的逻辑，和带项目一模一样。', week1: '复盘一次你说服别人的经历，写出三步方法论。' },
-  { arc: 'disruptor', name: '小店创业主理人', sal: '2k–30k', need: { risk: true, hours: 'high' }, tags: ['全面试错'], fit: '你管得住混乱，这就够开一家店了。', week1: '周末摆摊/快闪一次，用最小成本验证一种需求。' },
-  { arc: 'disruptor', name: '供应链跟单/采购', sal: '6k–12k', need: { stable: true }, tags: ['幕后枢纽'], fit: '让链条咬合齿轮的人，是老板离不开的那种。', week1: '梳理你所在公司的订单流程，画一张全流程图。' },
+  { arc: 'leader', name: '项目经理/PMO', sal: '12k–28k', tags: ['跨行业通用'], fit: '推得动事情的人，到哪儿都是核心。', week1: '主动认领同事间没人想接的一个麻烦事并推进。' },
+  { arc: 'leader', name: '销售主管', sal: '10k–35k', need: { risk: true }, tags: ['管理入门'], fit: '带队伍打仗的逻辑，和带项目一模一样。', week1: '复盘一次你说服别人的经历，写出三步方法论。' },
+  { arc: 'leader', name: '小店创业主理人', sal: '2k–30k', need: { risk: true, hours: 'high' }, tags: ['全面试错'], fit: '你管得住混乱，这就够开一家店了。', week1: '周末摆摊/快闪一次，用最小成本验证一种需求。' },
+  { arc: 'leader', name: '供应链跟单/采购', sal: '6k–12k', need: { stable: true }, tags: ['幕后枢纽'], fit: '让链条咬合齿轮的人，是老板离不开的那种。', week1: '梳理你所在公司的订单流程，画一张全流程图。' },
 
   /* 定盘星 */
-  { arc: 'anchor', name: '行政/人事专员', sal: '4k–8k', need: { minIncome: 4000, stable: true }, tags: ['稳定兜底'], fit: '把琐事做得像仪式感，这是稀缺品质。', week1: '整理一份你过去的工作 SOP 文档，面试时就是证据。' },
-  { arc: 'anchor', name: '银行大堂/客户服务', sal: '6k–12k', need: { stable: true, hours: 'mid' }, tags: ['体系背书'], fit: '稳定有序的秩序感是你的舒适区也是价值。', week1: '预约一次银行客户经理，了解客户经理转岗路径。' },
-  { arc: 'anchor', name: '财务共享中心专员', sal: '6k–11k', need: { stable: true, hours: 'mid' }, tags: ['可认证'], fit: '流程化工作里，认真的人升级最快。', week1: '考一本入门级会计/办公认证，做备考计划表。' },
-  { arc: 'anchor', name: '物业运营管家', sal: '5k–9k', need: { stable: true }, tags: ['线下实体'], fit: '让人放心把家交给你的那种人。', week1: '调研你所在小区物业的差评清单，做成改善建议。' },
+  { arc: 'stable', name: '行政/人事专员', sal: '4k–8k', need: { minIncome: 4000, stable: true }, tags: ['稳定兜底'], fit: '把琐事做得像仪式感，这是稀缺品质。', week1: '整理一份你过去的工作 SOP 文档，面试时就是证据。' },
+  { arc: 'stable', name: '银行大堂/客户服务', sal: '6k–12k', need: { stable: true, hours: 'mid' }, tags: ['体系背书'], fit: '稳定有序的秩序感是你的舒适区也是价值。', week1: '预约一次银行客户经理，了解客户经理转岗路径。' },
+  { arc: 'stable', name: '财务共享中心专员', sal: '6k–11k', need: { stable: true, hours: 'mid' }, tags: ['可认证'], fit: '流程化工作里，认真的人升级最快。', week1: '考一本入门级会计/办公认证，做备考计划表。' },
+  { arc: 'stable', name: '物业运营管家', sal: '5k–9k', need: { stable: true }, tags: ['线下实体'], fit: '让人放心把家交给你的那种人。', week1: '调研你所在小区物业的差评清单，做成改善建议。' },
 
   /* 架构师（双高） */
   { arc: 'architect', name: '全栈软件工程师', sal: '15k–35k', need: { hours: 'high' }, tags: ['高薪天花板'], fit: '既能想清楚也能做出来的复合体，市场缺口最大。', week1: '做一个带数据的小工具网站：从设计到上线全流程。' },
