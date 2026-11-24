@@ -404,7 +404,7 @@
         <div class="panel-h"><h3>六维画像</h3><span>RADAR PROFILE</span></div>
         <div class="radar-wrap"><canvas id="radar-canvas"></canvas></div>
         <div class="axes-list">
-          ${AXES.map(a => `<div class="axis-item">${a.label} <b>${r.norm[a.key]}</b></div>`).join('')}
+          ${AXES.map(a => `<div class="axis-item">${a.label} <b>${Math.round(60 + r.norm[a.key] * 0.4)}</b></div>`).join('')}
         </div>
       </div>
 
@@ -420,7 +420,6 @@
 
       <div class="panel">
         <div class="panel-h"><h3>为你校准的方向 TOP3</h3><span>FIT ROADMAP</span></div>
-        ${r.relaxed.length ? `<p class="relaxed-note">已按你的情况适度放宽了：<b>${r.relaxed.join('、')}</b></p>` : ''}
         ${r.top3.map(c => `
           <div class="career-card">
             <div class="career-top">
@@ -449,7 +448,8 @@
     go('result');
     RB_Poster.confetti(colors.accent);
     requestAnimationFrame(() =>
-      RB_Poster.drawRadar($('#radar-canvas'), AXES.map(a => r.norm[a.key]), colors.accent));
+      RB_Poster.drawRadar($('#radar-canvas'),
+        AXES.map(a => ({ val: r.norm[a.key], label: a.label })), colors.accent));
   }
 
   /* ---------- 海报 ---------- */
@@ -535,7 +535,7 @@
     if (currentQIndex() >= QUESTIONS.length) finish();
     else { go('quiz'); renderQuiz(false); }
   });
-  $('#btn-back').addEventListener('click', () => { purgeDrafts(); initCover(); go('cover'); });
+  $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); initCover(); go('cover'); });
 
   $('#poster-share').addEventListener('click', doShare);
   $('#poster-download').addEventListener('click', saveImage);
