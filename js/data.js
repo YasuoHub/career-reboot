@@ -211,7 +211,6 @@ const QUESTIONS = [
     opts: [
       { t: '男', add: { gender: '男' } },
       { t: '女', add: { gender: '女' } },
-      { t: '非二元 / 其他', add: { gender: '其他' } },
     ],
   },
 ];
