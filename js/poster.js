@@ -235,7 +235,7 @@ const RB_Poster = (() => {
 
     // 角色头像（右上区域 · 大尺寸跟结果页 .res-hero 同款沉浸感）
     if (arcImg) {
-      const aw = 330, ah = 412;               // 4:5 · 原 196×245 ×1.69
+      const aw = 254, ah = 317;               // 4:5 · 原 330×412 ÷1.3
       const ax = W - 56 - aw;                  // 右留 56px
       const ay = 190;                         // 上方留空给 header；头像底部 y=602 与下方文字留 20px 间隙
       ctx.save();
