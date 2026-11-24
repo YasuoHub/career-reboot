@@ -11,6 +11,6 @@
   },
   "scripts": {
     "dev": "echo \"dev script placeholder\"",
-    "check": "node --check js/app.js && node --check js/report.js && node --check js/data.js && node --check api/alipay/create-order.js && node --check api/alipay/verify.js && node --check api/alipay/notify.js && node --check api/alipay/return.js && node --check api/alipay/query-order.js && node --check lib/alipay-orders.js && node --check lib/alipay-sdk.js"
+    "check": "node --check js/app.js && node --check js/report.js && node --check js/data.js && node --check api/alipay/create-order.js && node --check api/alipay/price.js && node --check api/alipay/verify.js && node --check api/alipay/notify.js && node --check api/alipay/return.js && node --check api/alipay/query-order.js && node --check lib/alipay-orders.js && node --check lib/alipay-sdk.js"
   }
 }

@@ -67,6 +67,27 @@
     screens[name].classList.add('active'); window.scrollTo(0, 0);
   }
 
+  /* ---------- 价格（以服务端 ALIPAY_PRICE 为准） ---------- */
+  let payPrice = null;
+  function priceLabel(p) {
+    const n = Number(p);
+    return Number.isFinite(n) && n > 0 ? `¥${n.toFixed(2)}` : '¥--';
+  }
+  async function getPrice() {
+    if (payPrice) return payPrice;
+    try {
+      const r = await fetch('/api/alipay/price', { headers: { Accept: 'application/json' } });
+      const d = await r.json();
+      if (r.ok && Number(d.amount) > 0) payPrice = Number(d.amount);
+    } catch (_) { /* 失败时保留占位；实际支付金额始终以服务端下单结果为准 */ }
+    return payPrice;
+  }
+  function applyPrice(p) {
+    if (!p) return;
+    document.querySelectorAll('[data-price]').forEach(el => { el.textContent = priceLabel(p); });
+  }
+  function refreshPrice() { getPrice().then(applyPrice); }
+
   /* ---------- 封面 ---------- */
   function initCover() {
     $('#stat-total').textContent = store.total.toLocaleString('zh-CN');
@@ -265,6 +286,18 @@
   }
 
   /* ---------- 结果页 ---------- */
+  function bindAvatar() {
+    const img = document.querySelector('.arc-avatar');
+    if (!img || !img.parentElement) return;
+    const wrap = img.parentElement;
+    const ok = () => wrap.classList.add('loaded');
+    if (img.complete && img.naturalWidth > 0) ok();
+    else {
+      img.addEventListener('load', ok, { once: true });
+      img.addEventListener('error', () => wrap.classList.add('error'), { once: true });
+    }
+  }
+
   function renderResult() {
     if (!result || !result.arc) { go('cover'); toast('结果没接住，请重测一次'); return; }
     const r = result, arc = r.arc, colors = arc.colors;
@@ -284,7 +317,10 @@
           <h2 class="res-name">${arc.cn}</h2>
           <p class="res-slogan">${arc.slogan}</p>
         </div>
-        <img class="arc-avatar" src="/avatars/${avatarFile}" alt="${arc.cn}" loading="lazy" />
+        <div class="arc-avatar-wrap">
+          <span class="arc-avatar-skel" aria-hidden="true"></span>
+          <img class="arc-avatar" src="/avatars/${avatarFile}" alt="${arc.cn}" width="147" height="184" loading="eager" decoding="async" />
+        </div>
       </div>
       <p class="rarity-chip"><span class="pip"></span>这类重启者仅占全部被测者的 ${arc.rarity}%</p>
 
@@ -322,10 +358,29 @@
           </div>`).join('')}
       </div>
 
+      ${store.isUnlocked() ? '' : `
+      <section class="report-teaser">
+        <div class="teaser-h"><span>深度报告</span><em>DEEP REPORT</em></div>
+        <h3>结果页给你方向，深度报告给你一条能照着走的路线。</h3>
+        <ul class="teaser-list">
+          <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
+          <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
+          <li><b>怎么讲</b>简历改写示例 + 面试高频问题，把上一段经历讲成优势。</li>
+          <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
+        </ul>
+        <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 16 道作答生成，不套模板，数据只在本机。</p>
+      </section>`}
+
       <div class="res-ctas">
-        <button id="btn-poster" class="btn btn-primary">生成分享海报</button>
-        <button id="btn-unlock" class="btn btn-ghost">${store.isUnlocked() ? '查看深度报告' : '解锁深度报告 ¥9.9'}</button>
-        <button id="btn-redo" class="btn btn-ghost">再测一次</button>
+        <button id="btn-unlock" class="btn-unlock${store.isUnlocked() ? ' is-owned' : ''}" type="button">
+          <span class="unlock-main">${store.isUnlocked() ? '查看深度报告' : `解锁深度报告 <b data-price>${priceLabel(payPrice)}</b>`}</span>
+          <span class="unlock-sub">${store.isUnlocked() ? '已解锁 · 可随时回看' : '人格深读 · 12 周路线 · 简历与面试话术'}</span>
+          ${store.isUnlocked() ? '' : '<i class="unlock-spark" aria-hidden="true">✦</i>'}
+        </button>
+        <div class="cta-row">
+          <button id="btn-poster" class="btn btn-primary">生成分享海报</button>
+          <button id="btn-redo" class="btn btn-ghost">再测一次</button>
+        </div>
       </div>
       <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />数据仅保存在你的设备本地，不上传任何服务器。薪资与供需为公开报告量级参考。</p>
     `;
@@ -334,6 +389,8 @@
     $('#btn-unlock').addEventListener('click', () => { if (store.isUnlocked()) openReport(); else openUnlock(); });
     $('#btn-redo').addEventListener('click', restart);
     go('result');
+    bindAvatar();
+    refreshPrice();
     RB_Poster.confetti(colors.accent);
     requestAnimationFrame(() => RB_Poster.drawRadar($('#radar-canvas'), AXES.map(a => ({ val: r.norm[a.key], label: a.label })), colors.accent));
   }
@@ -420,12 +477,19 @@
 
     const overlay = overlayShell(`
       <div class="unlock-card">
-        <h3>解锁深度报告 · ¥9.9</h3>
-        <p>16 型人格深读 × TOP3 方向 12 周路径 × 简历改写与面试话术 × 本周就能做的第一步<br />支付宝完成付款后自动解锁。</p>
-        <button id="unlock-pay" class="btn btn-primary">前往支付宝付款</button>
+        <p class="unlock-kicker">DEEP REPORT · 一次买断</p>
+        <h3>解锁深度报告 <span class="unlock-price" data-price>${priceLabel(payPrice)}</span></h3>
+        <ul class="unlock-includes">
+          <li>三段式人格深读 + 六维逐项拆解</li>
+          <li>TOP3 方向的 12 周落地路线</li>
+          <li>简历改写示例 + 面试高频问题</li>
+          <li>本周 / 本月 / 下月三件事</li>
+        </ul>
+        <button id="unlock-pay" class="btn btn-primary">支付宝支付 <span data-price>${priceLabel(payPrice)}</span></button>
         <button id="unlock-cancel" class="btn btn-ghost">取消</button>
         <p class="unlock-tip">付款完成后会跳回本页自动解锁；若没自动跳回，回本页再点一次「解锁深度报告」会先核实上一笔付款。</p>
       </div>`);
+    refreshPrice();
     const payBtn = overlay.querySelector('#unlock-pay');
     overlay.querySelector('#unlock-cancel').addEventListener('click', () => overlay.remove());
     payBtn.addEventListener('click', async () => {
