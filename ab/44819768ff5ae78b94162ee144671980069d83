@@ -1,0 +1,23 @@
+api/alipay/notify.js
+  s_88739e2e3fe509::t_ad2ad3e76fced0 17-30,34,39-46,64
+  s_88739e2e3fe509::t_8ebc6815d0ef47 47
+  s_88739e2e3fe509::t_6d1dc4f9559f5b 61-63
+  s_88739e2e3fe509::t_44e8cecf2cc31d 65
+  s_88739e2e3fe509::t_184d4f6d1b9d90 59-60,67,71,73,80,85,91,97,108,111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ab44819768ff5ae78b94162ee144671980069d83",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
