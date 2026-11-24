@@ -233,17 +233,19 @@ const RB_Poster = (() => {
     ctx.fillStyle = dim;
     ctx.fillText('人生重启 · 人格图鉴', 64, 148);
 
-    // 角色头像（加载成功时替代水印大数字，作为视觉身份锚点）
+    // 角色头像（右上大图，跟结果页 .res-hero 同款沉浸感）
     if (arcImg) {
-      const ax = W - 64 - 148, ay = 168, aw = 148, ah = 185;
+      const aw = 196, ah = 245;             // 4:5 匹配源图比例
+      const ax = W - 64 - aw;                // 右留 64px
+      const ay = 340;                        // 与 EN 名 + CN 大名 + slogan 垂直中心对齐
       ctx.save();
       ctx.shadowColor = colors.glow; ctx.shadowBlur = 60; ctx.shadowOffsetY = 8;
-      rr(ctx, ax, ay, aw, ah, 18); ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fill();
+      rr(ctx, ax, ay, aw, ah, 20); ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fill();
       ctx.clip();
       ctx.drawImage(arcImg, ax, ay, aw, ah);
       ctx.restore();
       ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
-      rr(ctx, ax, ay, aw, ah, 18); ctx.stroke();
+      rr(ctx, ax, ay, aw, ah, 20); ctx.stroke();
     } else {
       // 无头像时降级为半透明水印大数字（fallback）
       ctx.save();
@@ -254,21 +256,22 @@ const RB_Poster = (() => {
       ctx.restore();
     }
 
-    // EN 名
+    // EN 名（左对齐）
+    ctx.textAlign = 'left';
     ctx.font = `700 25px ${FS}`;
     ctx.fillStyle = dim;
     const enSpaced = arc.en.split('').join('\u200a') + '\u200a';
     ctx.fillText(enSpaced, 64, 372);
 
-    // CN 大名
+    // CN 大名（左对齐，更大更醒目）
     ctx.font = `400 128px ${FD}`;
     ctx.fillStyle = '#ffffff';
     ctx.fillText(arc.cn, 60, 500);
 
-    // 口号
+    // 口号（左对齐）
     ctx.font = `400 31px ${FS}`;
     ctx.fillStyle = 'rgba(245,243,255,.8)';
-    const sl = wrap(ctx, arc.slogan, W - 190);
+    const sl = wrap(ctx, arc.slogan, 380);
     sl.forEach((ln, i) => ctx.fillText(ln, 63, 568 + i * 46));
 
     // 关键词（自动换行排布）

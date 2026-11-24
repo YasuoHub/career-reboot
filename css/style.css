@@ -278,11 +278,14 @@ img { display: block; max-width: 100%; }
   color: var(--accent); text-transform: uppercase;
   margin-bottom: 8px;
 }
-.res-watermark {
+.res-hero {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
   margin-bottom: 20px;
 }
-.res-watermark::before {
+.res-hero::before {
   content: attr(data-num);
   position: absolute; right: -6px; top: -58px;
   font-family: var(--font-display);
@@ -291,14 +294,20 @@ img { display: block; max-width: 100%; }
   -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 32%, transparent);
   opacity: .55;
   pointer-events: none; user-select: none;
+  z-index: 0;
+}
+.res-hero-text {
+  flex: 1; min-width: 0;
+  position: relative; z-index: 1;
 }
 .arc-avatar {
   display: block;
-  width: 108px; height: 135px;   /* 4:5 与源图比例一致 */
-  border-radius: 16px;
-  margin: 0 auto 18px;
-  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(255, 255, 255, .08);
+  width: 150px; height: 187px;   /* 4:5 与源图比例一致，匹配标题高度 */
+  border-radius: 18px;
+  flex: none;
+  box-shadow: 0 16px 56px var(--glow), 0 0 0 1px rgba(255, 255, 255, .08);
   background: rgba(255, 255, 255, .03);
+  position: relative; z-index: 1;
 }
 .res-en { font-size: 13px; letter-spacing: .3em; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 2px; }
 .res-name {

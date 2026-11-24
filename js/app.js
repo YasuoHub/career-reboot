@@ -257,12 +257,14 @@
 
     $('#res-body').innerHTML = `
       <p class="res-context">为「${r.context}」的你校准</p>
-      <div class="res-watermark" data-num="${arc.num}">
+      <div class="res-hero" data-num="${arc.num}">
+        <div class="res-hero-text">
+          <p class="res-badge">Reboot Personality 图鉴 №${arc.num}</p>
+          <p class="res-en">${arc.en}</p>
+          <h2 class="res-name">${arc.cn}</h2>
+          <p class="res-slogan">${arc.slogan}</p>
+        </div>
         <img class="arc-avatar" src="/avatars/${avatarFile}" alt="${arc.cn}" loading="lazy" />
-        <p class="res-badge">Reboot Personality 图鉴 №${arc.num}</p>
-        <p class="res-en">${arc.en}</p>
-        <h2 class="res-name">${arc.cn}</h2>
-        <p class="res-slogan">${arc.slogan}</p>
       </div>
       <p class="rarity-chip"><span class="pip"></span>这类重启者仅占全部被测者的 ${arc.rarity}%</p>
 
