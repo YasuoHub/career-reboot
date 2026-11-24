@@ -30,8 +30,11 @@ const RB_Poster = (() => {
   const FS = "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
   const FD = "'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif";
 
-  /* ---------- 雷达图（结果页） ---------- */
-  function drawRadar(canvas, normScores, accent) {
+  /* ---------- 雷达图（结果页） ----------
+     axesData = [{ val: number(0-100), label: string }, ...]
+     展示口径：原始值映射到 60–100 区间（最低 60，其余同比递增），
+     顶点标注维度文字而非数字。 */
+  function drawRadar(canvas, axesData, accent) {
     const dpr = window.devicePixelRatio || 1;
     const size = 268;
     canvas.width = size * dpr; canvas.height = size * dpr;
@@ -39,11 +42,15 @@ const RB_Poster = (() => {
     ctx.scale(dpr, dpr);
 
     const cx = size / 2, cy = size / 2, R = size * 0.37;
-    const n = normScores.length;
+    const n = axesData.length;
+
+    // 映射：原始 0→60，100→100；最低不低于 60
+    const mappedScores = axesData.map(d => 60 + d.val * 0.4);
+
     const angle = i => -Math.PI / 2 + (Math.PI * 2 * i) / n;
 
     const hex = accent.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    const cr = parseInt(hex.slice(0, 2), 16), cg = parseInt(hex.slice(2, 4), 16), cb = parseInt(hex.slice(4, 6), 16);
 
     let t = 0;
     const dur = 650;
@@ -53,7 +60,7 @@ const RB_Poster = (() => {
       const eased = 1 - Math.pow(1 - p, 3);
       ctx.clearRect(0, 0, size, size);
 
-      // 网格
+      // 网格环
       for (let ring = 1; ring <= 3; ring++) {
         ctx.beginPath();
         const rr_ = R * ring / 3;
@@ -66,9 +73,8 @@ const RB_Poster = (() => {
         ctx.strokeStyle = `rgba(255,255,255,${0.07 + ring * 0.02})`;
         ctx.stroke();
       }
-      // 轴线 + 标签
+      // 轴线 + 维度文字标签
       ctx.font = `500 11.5px ${FS}`;
-      ctx.fillStyle = 'rgba(255,255,255,.55)';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (let i = 0; i < n; i++) {
         const a = angle(i);
@@ -77,31 +83,31 @@ const RB_Poster = (() => {
         ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
         ctx.strokeStyle = 'rgba(255,255,255,.06)';
         ctx.stroke();
-        const lx = cx + Math.cos(a) * (R + 19), ly = cy + Math.sin(a) * (R + 19);
-        ctx.fillStyle = normScores[i] >= 70 ? `rgba(${r},${g},${b},.95)` : 'rgba(255,255,255,.5)';
-        ctx.fillText(normScores[i].toFixed(0), lx, ly);
+        const lx = cx + Math.cos(a) * (R + 20), ly = cy + Math.sin(a) * (R + 20);
+        ctx.fillStyle = 'rgba(255,255,255,.55)';
+        ctx.fillText(axesData[i].label, lx, ly);
       }
-      // 数据面
+      // 数据面（使用映射后的分值，最低 60）
       ctx.beginPath();
       for (let i = 0; i < n; i++) {
         const a = angle(i);
-        const v = R * normScores[i] / 100 * eased;
+        const v = R * mappedScores[i] / 100 * eased;
         const x = cx + Math.cos(a) * v, y = cy + Math.sin(a) * v;
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = `rgba(${r},${g},${b},.16)`;
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},.16)`;
       ctx.fill();
-      ctx.strokeStyle = `rgba(${r},${g},${b},.9)`;
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},.9)`;
       ctx.lineWidth = 1.6;
       ctx.stroke();
-      // 顶点
+      // 顶点圆点
       for (let i = 0; i < n; i++) {
         const a = angle(i);
-        const v = R * normScores[i] / 100 * eased;
+        const v = R * mappedScores[i] / 100 * eased;
         ctx.beginPath();
         ctx.arc(cx + Math.cos(a) * v, cy + Math.sin(a) * v, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},1)`;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},1)`;
         ctx.fill();
       }
       if (p < 1) requestAnimationFrame(step);
