@@ -436,12 +436,16 @@
 
   /* ---------- 海报 ---------- */
   async function openPoster() {
-    toast('正在画海报…');
     try {
       const url = await RB_Poster.buildShare(result);
+      // 弹窗一开就清 toast：toast 压在按钮上会吞掉点击（在旧内核上尤甚）
+      const tEl = $('#toast');
+      tEl.classList.remove('show');
+      clearTimeout(toastTimer);
       $('#poster-img').src = url;
       $('#poster-download').href = url;
       $('#poster-download').download = `重启人格-${result.arc.cn}.png`;
+      $('#link-copy').textContent = location.href.split('#')[0];
       $('#poster-modal').classList.remove('hidden');
     } catch (e) {
       console.error(e);
