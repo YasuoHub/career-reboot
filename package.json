@@ -1,0 +1,16 @@
+{
+  "name": "career-reboot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "alipay-sdk": "^4.14.0"
+  },
+  "scripts": {
+    "dev": "echo \"dev script placeholder\"",
+    "check": "node --check js/app.js && node --check js/report.js && node --check js/data.js && node --check api/alipay/create-order.js && node --check api/alipay/verify.js && node --check api/alipay/notify.js && node --check api/alipay/return.js && node --check api/alipay/query-order.js && node --check lib/alipay-orders.js && node --check lib/alipay-sdk.js"
+  }
+}

@@ -4,3 +4,13 @@ node_modules/
 Thumbs.db
 .temp/
 *.log
+/.alipay-sandbox.json
+
+# 密钥/证书一律不入库（应用私钥、支付宝公钥、APIv3 密钥等）
+.env
+.env.*
+密钥*/
+*.pem
+*.key
+*.p12
+*.pfx

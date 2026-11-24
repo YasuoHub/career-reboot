@@ -26,14 +26,30 @@
   window.addEventListener('load', () => setTimeout(hideLoader, 200));
   setTimeout(hideLoader, 4000);
 
-  const screens = { cover: $('#sc-cover'), quiz: $('#sc-quiz'), computing: $('#sc-computing'), result: $('#sc-result') };
+  const screens = { cover: $('#sc-cover'), quiz: $('#sc-quiz'), computing: $('#sc-computing'), result: $('#sc-result'), report: $('#sc-report') };
 
   /* ---------- 状态 ---------- */
   const store = {
     get total() { const v = parseInt(localStorage.getItem('rb_total') || '', 10); return Number.isFinite(v) && v > 380000 ? v : 396447; },
     bumpTotal() { localStorage.setItem('rb_total', String(this.total + 1)); },
-    saveLast(r) { localStorage.setItem('rb_last', JSON.stringify(r)); },
-    getLast() { try { return JSON.parse(localStorage.getItem('rb_last')); } catch (_) { return null; } },
+    /* 存完整结果，支付回跳/刷新后可恢复并生成深度报告 */
+    saveLast(r) { try { localStorage.setItem('rb_last', JSON.stringify(r)); } catch (_) {} },
+    getLast() {
+      try {
+        const r = JSON.parse(localStorage.getItem('rb_last'));
+        return r && r.arc && Array.isArray(r.top3) ? r : null;
+      } catch (_) { return null; }
+    },
+    /* 最近一次下单（用于支付回跳后没有带 out_trade_no 时兜底） */
+    saveOrder(o) { try { localStorage.setItem('rb_order', JSON.stringify(o)); } catch (_) {} },
+    getOrder() { try { return JSON.parse(localStorage.getItem('rb_order')); } catch (_) { return null; } },
+    /* 解锁凭证：服务端签发的令牌（含 90 天有效期） */
+    saveUnlock(u) { try { localStorage.setItem('rb_unlock', JSON.stringify(u)); } catch (_) {} },
+    getUnlock() { try { return JSON.parse(localStorage.getItem('rb_unlock')); } catch (_) { return null; } },
+    isUnlocked() {
+      const u = this.getUnlock();
+      return !!(u && u.token && (!u.exp || u.exp > Date.now()));
+    },
     /* v3 清理：旧版原型键名不再兼容，强制清空防 undefined */
     purgeLegacy() { localStorage.removeItem('rb_last'); },
   };
@@ -55,7 +71,11 @@
   function initCover() {
     $('#stat-total').textContent = store.total.toLocaleString('zh-CN');
     const last = store.getLast(), lastEl = $('#cover-last');
-    if (last && ARCHETYPES[last.archetype]) { lastEl.hidden = false; $('#cover-last-name').textContent = ARCHETYPES[last.archetype].cn; } else { lastEl.hidden = true; }
+    if (last && ARCHETYPES[last.archetype]) {
+      lastEl.hidden = false;
+      lastEl.classList.add('clickable');
+      $('#cover-last-name').textContent = ARCHETYPES[last.archetype].cn;
+    } else { lastEl.hidden = true; }
   }
 
   /* ---------- 答题 ---------- */
@@ -228,7 +248,7 @@
     const notes = [];
     if (profile.risk <= -1) notes.push('低风险路线优先'); else if (profile.floor >= 18000) notes.push('收入硬线优先于兴趣');
 
-    return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), gender: profile.gender, top3: scored.slice(0, 3), ts: Date.now() };
+    return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), gender: profile.gender, profile, top3: scored.slice(0, 3), ts: Date.now() };
   }
 
   /* ---------- 分析屏 ---------- */
@@ -251,7 +271,7 @@
     document.documentElement.style.setProperty('--accent', colors.accent);
     document.documentElement.style.setProperty('--deep', colors.deep);
     document.documentElement.style.setProperty('--glow', colors.glow);
-    store.saveLast({ archetype: r.archetype, ts: r.ts });
+    store.saveLast(r);
     const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
     const avatarFile = arc.avatarF.replace(/-f\.webp$/, r.gender === '男' ? '-m.webp' : '-f.webp');
 
@@ -276,16 +296,7 @@
       <div class="panel">
         <div class="panel-h"><h3>六维画像</h3><span>RADAR PROFILE</span></div>
         <div class="radar-wrap"><canvas id="radar-canvas"></canvas></div>
-        <div class="axes-list">${AXES.map(a => `<div class="axis-item">${a.label} <b>${Math.round(60 + r.norm[a.key] * 0.4)}</b></div>`).join('')}</div>
       </div>
-
-      ${r.top3[0] ? `
-      <div class="panel">
-        <div class="panel-h"><h3>匹配度总览</h3><span>FIT SCORE · TOP1</span></div>
-        <div class="metric-row">${Object.entries(r.top3[0].fb).map(([k, v]) => `<div class="metric"><b>${v}</b><small>${k}</small></div>`).join('')}</div>
-        <p class="fit-total">综合匹配度 <b>${r.top3[0].scoreNum}</b> / 100</p>
-        <p class="fit-note">分值为你在本批可及方向中的横向位次（同类岗位横比），非绝对门槛</p>
-      </div>` : ''}
 
       <div class="panel">
         <div class="panel-h"><h3>方向行动 TOP3</h3><span>FIT ROADMAP</span></div>
@@ -313,12 +324,14 @@
 
       <div class="res-ctas">
         <button id="btn-poster" class="btn btn-primary">生成分享海报</button>
+        <button id="btn-unlock" class="btn btn-ghost">${store.isUnlocked() ? '查看深度报告' : '解锁深度报告 ¥9.9'}</button>
         <button id="btn-redo" class="btn btn-ghost">再测一次</button>
       </div>
       <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />数据仅保存在你的设备本地，不上传任何服务器。薪资与供需为公开报告量级参考。</p>
     `;
 
     $('#btn-poster').addEventListener('click', openPoster);
+    $('#btn-unlock').addEventListener('click', () => { if (store.isUnlocked()) openReport(); else openUnlock(); });
     $('#btn-redo').addEventListener('click', restart);
     go('result');
     RB_Poster.confetti(colors.accent);
@@ -346,6 +359,194 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('已开始下载；若没进相册，长按上方图片保存');
   }
+
+  /* ---------- 深度报告解锁（支付宝手机网站支付） ---------- */
+  function isWeChat() { return /MicroMessenger/i.test(navigator.userAgent); }
+
+  function overlayShell(inner, id = 'unlock-overlay') {
+    const overlay = document.createElement('div');
+    overlay.id = id;
+    overlay.className = 'unlock-overlay';
+    overlay.innerHTML = inner;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    return overlay;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) {}
+    ta.remove();
+    return Promise.resolve(ok);
+  }
+
+  function showWechatTip() {
+    const link = location.href.split('#')[0];
+    const overlay = overlayShell(`
+      <div class="unlock-card">
+        <h3>请用浏览器打开后付款</h3>
+        <p>微信内无法直接唤起支付宝。请点右上角「···」<br />→「在浏览器打开」，再回来付款解锁。</p>
+        <button id="wx-copy" class="btn btn-primary">复制本页链接</button>
+        <button id="wx-close" class="btn btn-ghost">知道了</button>
+      </div>`);
+    overlay.querySelector('#wx-close').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#wx-copy').addEventListener('click', async () => {
+      const btn = overlay.querySelector('#wx-copy');
+      const ok = await copyText(link);
+      btn.textContent = ok ? '已复制，去浏览器粘贴打开' : '复制失败，请手动复制地址栏';
+    });
+  }
+
+  async function openUnlock() {
+    if (store.isUnlocked()) { openReport(); return; }
+    if (isWeChat()) { showWechatTip(); return; }
+
+    // 之前下过单但没确认成功（比如回跳时还没同步）：先核单，避免重复付款
+    const prev = store.getOrder();
+    if (prev && prev.outTradeNo) {
+      if (await verifyOrder(prev.outTradeNo)) {
+        if (result) renderResult();
+        toast('已确认付款，深度报告解锁完成');
+        openReport();
+        return;
+      }
+    }
+
+    const overlay = overlayShell(`
+      <div class="unlock-card">
+        <h3>解锁深度报告 · ¥9.9</h3>
+        <p>16 型人格深读 × TOP3 方向 12 周路径 × 简历改写与面试话术 × 本周就能做的第一步<br />支付宝完成付款后自动解锁。</p>
+        <button id="unlock-pay" class="btn btn-primary">前往支付宝付款</button>
+        <button id="unlock-cancel" class="btn btn-ghost">取消</button>
+        <p class="unlock-tip">付款完成后会跳回本页自动解锁；若没自动跳回，回本页再点一次「解锁深度报告」会先核实上一笔付款。</p>
+      </div>`);
+    const payBtn = overlay.querySelector('#unlock-pay');
+    overlay.querySelector('#unlock-cancel').addEventListener('click', () => overlay.remove());
+    payBtn.addEventListener('click', async () => {
+      payBtn.disabled = true;
+      payBtn.textContent = '正在创建订单…';
+      try {
+        const res = await fetch('/api/alipay/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ archetype: result?.archetype }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.payUrl) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
+        store.saveOrder({ outTradeNo: data.outTradeNo, amount: data.amount, ts: Date.now() });
+        overlay.remove();
+        location.href = data.payUrl;  // 跳转支付宝手机网站收银台
+      } catch (e) {
+        payBtn.disabled = false;
+        payBtn.textContent = '重试';
+        toast('下单失败：' + e.message);
+      }
+    });
+  }
+
+  /* ---------- 深度报告 ---------- */
+  function openReport() {
+    if (!result || !window.RB_Report) { toast('报告数据丢失，请重新测一次'); return; }
+    const body = $('#report-body');
+    if (!body) return;
+    body.innerHTML = window.RB_Report.build(result, { order: store.getOrder(), unlock: store.getUnlock() });
+    go('report');
+  }
+
+  /* ---------- 支付回跳验单 ---------- */
+  function cleanPayQuery() {
+    try { window.history.replaceState(null, '', location.pathname + (location.hash || '')); } catch (_) {}
+  }
+
+  function parseTokenExp(token) {
+    try {
+      let b64 = token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+      b64 += '='.repeat((4 - b64.length % 4) % 4);
+      const payload = JSON.parse(atob(b64));
+      return Number(payload.exp) || 0;
+    } catch (_) { return 0; }
+  }
+
+  async function verifyOrder(outTradeNo) {
+    try {
+      const res = await fetch('/api/alipay/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outTradeNo }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.paid || !data.token) return false;
+      store.saveUnlock({
+        outTradeNo,
+        tradeNo: data.tradeNo || '',
+        paidAt: data.paidAt || '',
+        token: data.token,
+        exp: parseTokenExp(data.token),
+      });
+      return true;
+    } catch (e) {
+      console.error('[verifyOrder]', e);
+      return false;
+    }
+  }
+
+  /* 支付宝回跳瞬间订单可能尚未同步，留 3 次重试 */
+  async function verifyOrderWithRetry(outTradeNo, tries = 3) {
+    for (let i = 0; i < tries; i++) {
+      if (await verifyOrder(outTradeNo)) return true;
+      if (i < tries - 1) await new Promise(r => setTimeout(r, 1500));
+    }
+    return false;
+  }
+
+  async function handlePayReturn() {
+    const params = new URLSearchParams(location.search);
+    const payReturn = params.get('pay_return') === '1';
+    const canceled = params.get('pay_cancel') === '1';
+    if (!payReturn && !canceled) return;
+
+    const outTradeNo = params.get('out_trade_no') || store.getOrder()?.outTradeNo || '';
+    const last = store.getLast();
+    if (last) result = last;           // 同浏览器可恢复完整结果
+    cleanPayQuery();
+
+    if (canceled) {
+      toast('已取消支付');
+      if (result) renderResult(); else initCover();
+      return;
+    }
+
+    const overlay = overlayShell(`
+      <div class="unlock-card">
+        <h3>正在确认支付结果…</h3>
+        <p class="unlock-tip">请不要关闭本页</p>
+      </div>`, 'pay-confirm-overlay');
+
+    const ok = outTradeNo ? await verifyOrderWithRetry(outTradeNo) : false;
+    overlay.remove();
+
+    if (ok) {
+      if (result) {
+        renderResult();
+        toast('支付成功，深度报告已解锁');
+        openReport();
+      } else {
+        go('cover');
+        toast('支付成功，但本机已无测试结果，请重新测试后查看报告');
+      }
+      return;
+    }
+
+    toast('暂未查到支付成功；若已扣款，请点「解锁深度报告」再核实一次');
+    if (result) renderResult(); else initCover();
+  }
+
   async function doShare() {
     const shareUrl = location.href.split('#')[0];
     const ok = await RB_Poster.share(`${result.arc.cn} · 重启人格图鉴`, `测出我是「${result.arc.cn}」，你是哪种重启者？快来测👉${shareUrl}`);
@@ -359,10 +560,18 @@
   /* ---------- 事件绑定 ---------- */
   $('#btn-start').addEventListener('click', () => { currentQi = 0; go('quiz'); renderQuiz(false); });
   $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); currentQi = 0; initCover(); go('cover'); });
+  $('#cover-last').addEventListener('click', () => {
+    const last = store.getLast();
+    if (!last) return;
+    result = last;
+    renderResult();
+  });
+  $('#report-back').addEventListener('click', () => { if (result) go('result'); else go('cover'); });
   $('#poster-share').addEventListener('click', doShare);
   $('#poster-download').addEventListener('click', saveImage);
   document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#poster-modal').classList.contains('hidden')) closeModal(); });
 
   initCover();
+  handlePayReturn();
 })();
