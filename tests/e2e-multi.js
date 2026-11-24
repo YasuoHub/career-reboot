@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 global.window = {};
-eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'data.js'), 'utf8'));
+eval(fs.readFileSync('D:/production/practice/career-reboot/js/data.js', 'utf8'));
 const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, CLASSIFY_DIM } = window.RB_DATA;
 
 function detect(a) {
@@ -26,7 +26,7 @@ function detect(a) {
   const intui = CLASSIFY_DIM.D2_intu(n);
   const drv = CLASSIFY_DIM.D3_drv(n);
   const orch = CLASSIFY_DIM.D4_orch(n);
-  const id = `${ext ? 'e' : 'i'}${intui ? 'in' : 'at'}${drv ? 'jp' : 'sj'}${orch ? '1' : '2'}`;
+  const id = `${ext ? 'ei' : 'ii'}_${intui ? 'in' : 'at'}_${drv ? 'jp' : 'sj'}_${orch ? '1' : '2'}`;
   return id;
 }
 
@@ -93,7 +93,7 @@ const patterns = [
         await page.waitForSelector('.q-panel .opt >> nth=0', { timeout: 5000 });
         await page.locator('.q-panel .opt').nth(answers[q.id] !== undefined ? answers[q.id] : 0).click();
       }
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(450);
     }
     try {
       await page.waitForSelector('#sc-result.active', { timeout: 15000 });
