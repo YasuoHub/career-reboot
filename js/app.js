@@ -66,7 +66,7 @@
   function go(name) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[name].classList.add('active');
-    screens[name].scrollTop = 0;
+    window.scrollTo(0, 0);   // 页面级原生滚动，切屏回顶
   }
 
   /* ---------- 封面 ---------- */
