@@ -228,7 +228,7 @@
     const notes = [];
     if (profile.risk <= -1) notes.push('低风险路线优先'); else if (profile.floor >= 18000) notes.push('收入硬线优先于兴趣');
 
-    return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), top3: scored.slice(0, 3), ts: Date.now() };
+    return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), gender: profile.gender, top3: scored.slice(0, 3), ts: Date.now() };
   }
 
   /* ---------- 分析屏 ---------- */
@@ -253,10 +253,12 @@
     document.documentElement.style.setProperty('--glow', colors.glow);
     store.saveLast({ archetype: r.archetype, ts: r.ts });
     const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
+    const avatarFile = arc.avatarF.replace(/-f\.webp$/, r.gender === '男' ? '-m.webp' : '-f.webp');
 
     $('#res-body').innerHTML = `
       <p class="res-context">为「${r.context}」的你校准</p>
       <div class="res-watermark" data-num="${arc.num}">
+        <img class="arc-avatar" src="/avatars/${avatarFile}" alt="${arc.cn}" loading="lazy" />
         <p class="res-badge">Reboot Personality 图鉴 №${arc.num}</p>
         <p class="res-en">${arc.en}</p>
         <h2 class="res-name">${arc.cn}</h2>

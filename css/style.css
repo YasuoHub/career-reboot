@@ -280,6 +280,7 @@ img { display: block; max-width: 100%; }
 }
 .res-watermark {
   position: relative;
+  margin-bottom: 20px;
 }
 .res-watermark::before {
   content: attr(data-num);
@@ -290,6 +291,14 @@ img { display: block; max-width: 100%; }
   -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 32%, transparent);
   opacity: .55;
   pointer-events: none; user-select: none;
+}
+.arc-avatar {
+  display: block;
+  width: 108px; height: 135px;   /* 4:5 与源图比例一致 */
+  border-radius: 16px;
+  margin: 0 auto 18px;
+  box-shadow: 0 12px 40px var(--glow), 0 0 0 1px rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .03);
 }
 .res-en { font-size: 13px; letter-spacing: .3em; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 2px; }
 .res-name {

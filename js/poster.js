@@ -172,6 +172,18 @@ const RB_Poster = (() => {
     });
   }
 
+  /* ---------- 任意图片加载（超时降级 null，供海报叠角色头像用） ---------- */
+  function loadImg(src, timeout = 2500) {
+    return new Promise(resolve => {
+      if (!src) return resolve(null);
+      const img = new Image();
+      const timer = setTimeout(() => resolve(null), timeout);
+      img.onload = () => { clearTimeout(timer); resolve(img); };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
+      img.src = src;
+    });
+  }
+
   /* ---------- 分享海报 ---------- */
   async function buildShare(result) {
     const W = 750, H = 1334;
@@ -181,6 +193,11 @@ const RB_Poster = (() => {
     const { ARCHETYPES } = window.RB_DATA;
     const arc = ARCHETYPES[result.archetype];
     const colors = arc.colors;
+
+    // 按性别取对应版本的头像（无 gender 或其他默认女版兜底）
+    const gender = result.gender || '';
+    const avatarFile = arc.avatarF.replace(/-f\.webp$/, gender === '男' ? '-m.webp' : '-f.webp');
+    const arcImg = await loadImg('/avatars/' + avatarFile, 2500);
 
     // 底
     const bg = ctx.createLinearGradient(0, 0, W, H);
@@ -216,13 +233,26 @@ const RB_Poster = (() => {
     ctx.fillStyle = dim;
     ctx.fillText('人生重启 · 人格图鉴', 64, 148);
 
-    // 水印大数字
-    ctx.save();
-    ctx.font = `400 300px ${FD}`;
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
-    ctx.textAlign = 'right';
-    ctx.fillText(arc.num, W - 48, 380);
-    ctx.restore();
+    // 角色头像（加载成功时替代水印大数字，作为视觉身份锚点）
+    if (arcImg) {
+      const ax = W - 64 - 148, ay = 168, aw = 148, ah = 185;
+      ctx.save();
+      ctx.shadowColor = colors.glow; ctx.shadowBlur = 60; ctx.shadowOffsetY = 8;
+      rr(ctx, ax, ay, aw, ah, 18); ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fill();
+      ctx.clip();
+      ctx.drawImage(arcImg, ax, ay, aw, ah);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
+      rr(ctx, ax, ay, aw, ah, 18); ctx.stroke();
+    } else {
+      // 无头像时降级为半透明水印大数字（fallback）
+      ctx.save();
+      ctx.font = `400 300px ${FD}`;
+      ctx.fillStyle = 'rgba(255,255,255,.05)';
+      ctx.textAlign = 'right';
+      ctx.fillText(arc.num, W - 48, 380);
+      ctx.restore();
+    }
 
     // EN 名
     ctx.font = `700 25px ${FS}`;
@@ -337,5 +367,5 @@ const RB_Poster = (() => {
     } catch (_) { return false; }
   }
 
-  return { drawRadar, confetti, buildShare, share, loadQR };
+  return { drawRadar, confetti, buildShare, share, loadQR, loadImg };
 })();
