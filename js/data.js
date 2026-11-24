@@ -51,24 +51,24 @@ const QUESTIONS = [
   },
   {
     id: 'q4',
-    tag: '能力',
-    text: '突然接到一件完全没做过的新活儿，你的第一反应是——',
+    tag: '节奏',
+    text: '下班后或周末，精力允许时你的默认动作是——',
     opts: [
-      { t: '先拆结构：把目标、变量、交付标准列清楚', add: { dims: { analytic: 3 } } },
-      { t: '先找标杆，看看别人是怎么做的', add: { dims: { creative: 2 } } },
-      { t: '先动手干一版，边做边改再说', add: { dims: { maker: 3 } } },
-      { t: '先找行家聊十分钟，少走弯路', add: { dims: { social: 2, maker: 1 } } },
+      { t: '研究一件没弄明白的事，直到搞清楚为止', add: { dims: { analytic: 2 } } },
+      { t: '刷内容、看别人的作品，边看边琢磨标杆在哪', add: { dims: { creative: 2, analytic: 1 } } },
+      { t: '修个东西、做个小手工，折腾看得见摸得着的东西', add: { dims: { maker: 3 } } },
+      { t: '约人出来走走，边走边聊，顺便把事聊明白了', add: { dims: { social: 2, maker: 1 } } },
     ],
   },
   {
     id: 'q5',
-    tag: '能力',
-    text: '假如明天不用上班，你自己会去花时间做的事是——',
+    tag: '未来',
+    text: '重启的头三个月，你最想把时间砸在——',
     opts: [
-      { t: '啃一门能写进简历的新技能', add: { dims: { analytic: 1, maker: 1 } } },
-      { t: '捣鼓点看得见摸得着的东西：修、装、做', add: { dims: { maker: 3 } } },
-      { t: '拍点东西、写点东西、研究审美和内容', add: { dims: { creative: 3 } } },
-      { t: '组局、串门、跟人瞎聊顺便把事办了', add: { dims: { social: 3 } } },
+      { t: '搞懂一门能写进简历的新技能，系统学一遍', add: { dims: { analytic: 1, maker: 1 } } },
+      { t: '把脑子里想的做成看得见摸得着的东西出来', add: { dims: { maker: 3 } } },
+      { t: '把审美和内容感觉打磨到能出活、能变现', add: { dims: { creative: 3 } } },
+      { t: '先把圈子、人脉攒起来，事儿自然跟着来', add: { dims: { social: 3 } } },
     ],
   },
   {
@@ -78,7 +78,7 @@ const QUESTIONS = [
     opts: [
       { t: '不超过 5 小时，恢复和生活也很重要', add: { hours: 2, dims: { stable: 1 } } },
       { t: '5 到 15 小时，有节奏地冲刺', add: { hours: 1 } },
-      { t: '只要方向对，多少小时都行', add: { hours: 0, dims: { leader: 1 }, risk: 1 } },
+      { t: '全职冲刺，能投多少投多少', add: { hours: 0, dims: { leader: 1 }, risk: 1 } },
     ],
   },
   {
@@ -101,7 +101,7 @@ const QUESTIONS = [
       { t: '「这人越赚越多，是高手」', add: { dims: { leader: 2 }, risk: 1 } },
       { t: '「一门手艺硬，谁也抢不走」', add: { dims: { maker: 2, stable: 1 } } },
       { t: '「干的是真爱的事，眼睛里有光」', add: { dims: { creative: 2 } } },
-      { t: '「时间归自己，不用再看脸色」', add: { dims: { leader: 1, social: 1 } } },
+      { t: '「不靠任何人，自己撑起一条路」', add: { dims: { leader: 2 } } },
     ],
   },
   /* ---- v2 个人要素题（q9–q15），写入 profile 供过滤与打分 ---- */
@@ -158,7 +158,7 @@ const QUESTIONS = [
       { t: '很好，体力精力都没问题', add: { health: 1 } },
       { t: '能久坐，体力算一般', add: { health: 2 } },
       { t: '有体力限制，久站、负重都吃力', add: { health: 3 } },
-      { t: '得规律作息，倒班扛不住', add: { health: 4 } },
+      { t: '体力有限，久站或久蹲都不行', add: { health: 4 } },
     ],
   },
   {
@@ -170,12 +170,15 @@ const QUESTIONS = [
       { t: 'Excel / 数据处理', add: { sk: 'data' } },
       { t: '写作 / 文案', add: { sk: 'writing' } },
       { t: '沟通 / 销售', add: { sk: 'sales' } },
-      { t: '机械 / 设备操作', add: { sk: 'machinery' } },
+      { t: '机械 / 设备操作（含驾驶）', add: { sk: 'machinery' } },
       { t: '外语', add: { sk: 'language' } },
-      { t: '驾照', add: { sk: 'driving' } },
       { t: '编程基础', add: { sk: 'coding' } },
-      { t: '剪辑 / 摄影', add: { sk: 'av' } },
+      { t: '剪辑 / 摄影 / 出镜', add: { sk: 'av' } },
       { t: '教学 / 辅导', add: { sk: 'teach' } },
+      { t: 'PPT / 办公自动化', add: { sk: 'office' } },
+      { t: '平面设计 / UI', add: { sk: 'design' } },
+      { t: '新媒体运营 / 投流', add: { sk: 'newmedia' } },
+      { t: '客户服务 / 售后跟进', add: { sk: 'service' } },
     ],
   },
   {
@@ -183,10 +186,10 @@ const QUESTIONS = [
     tag: '期待',
     text: '想要的工作形态更接近哪种？',
     opts: [
-      { t: '坐班办公室，规律上下班', add: { pref: '坐班' } },
+      { t: '固定坐班，规律上下班最安心', add: { pref: '坐班' } },
       { t: '外勤跑动，别把我钉在工位上', add: { pref: '外勤' } },
-      { t: '可以接受倒班轮值，收入到位就行', add: { pref: '倒班' } },
-      { t: '时间优先，能弹性最好', add: { pref: '弹性' } },
+      { t: '倒班轮值可以接受，收入到位就行', add: { pref: '倒班' } },
+      { t: '时间自主安排，自己定节奏最好', add: { pref: '弹性' } },
     ],
   },
   {
@@ -272,10 +275,13 @@ const SKILLS = [
   { id: 'sales', label: '沟通销售' },
   { id: 'machinery', label: '机械设备操作' },
   { id: 'language', label: '外语' },
-  { id: 'driving', label: '驾照' },
   { id: 'coding', label: '编程基础' },
   { id: 'av', label: '剪辑摄影' },
   { id: 'teach', label: '教学辅导' },
+  { id: 'office', label: 'PPT/办公' },
+  { id: 'design', label: '平面设计/UI' },
+  { id: 'newmedia', label: '新媒体运营' },
+  { id: 'service', label: '客户服务' },
 ];
 /* 技能 → 轴向映射（F3 性格延续用的岗位画像构建） */
 const SKILL_AXIS = {
@@ -284,10 +290,13 @@ const SKILL_AXIS = {
   sales: { social: 2, leader: 2 },
   machinery: { maker: 3 },
   language: { social: 1, creative: 1 },
-  driving: { maker: 1 },
   coding: { analytic: 2, maker: 2 },
   av: { creative: 3, social: 1 },
   teach: { social: 3, leader: 1 },
+  office: { analytic: 2, stable: 1 },
+  design: { creative: 2, av: 1 },
+  newmedia: { social: 1, creative: 1, av: 1 },
+  service: { social: 2, stable: 1 },
 };
 const PAT_RANK = { '坐班': 0, '外勤': 1, '倒班': 2, '弹性': 3 };
 
@@ -368,7 +377,7 @@ const ACTIONS = [
 
   /* ── 15 手艺型：内向×直觉×支撑×守序 ── */
   { arc: 'ii_in_sj_1', name: '烘焙/咖啡主理人', sal: '5k–15k', fam: '社会生产服务和生活服务人员', tags: ['手艺吃饭', '低门槛开店'], J: '学徒→面包师→主厨→合伙人/店主。', F: '烘焙品牌/精品咖啡品牌。', L: '烘焙师认证+SCA 咖啡师认证。', week1: '在自己家做出第一批像样的面包（欧包/吐司均可），拍照记录步骤与难点。', req: { edu: 1, pat: '弹性', skills: [] }, tr: [['家政生活服务', .5], ['商贸零售', .4]], mkt: { g: 15, c: 72, shortage: false } },
-  { arc: 'ii_in_sj_1', name: '汽车维修技师/新能源车技师', sal: '6k–15k', fam: '生产制造及有关人员', tags: ['紧缺蓝领', '技术壁垒高'], J: '学徒→技师→技术主管→技术合伙人。', F: '独立修理厂/上门维修服务。', L: '1+X 证书+高压电安全认证（三电方向）。', week1: '预约一次新能源车上门维修观摩日，全程观察师傅的操作步骤和安全规程。', req: { edu: 1, pat: '外勤', phys: true, skills: ['machinery', 'driving'] }, tr: [['制造/工厂', .8], ['物流运输', .4]], mkt: { g: 38, c: 45, shortage: true } },
+  { arc: 'ii_in_sj_1', name: '汽车维修技师/新能源车技师', sal: '6k–15k', fam: '生产制造及有关人员', tags: ['紧缺蓝领', '技术壁垒高'], J: '学徒→技师→技术主管→技术合伙人。', F: '独立修理厂/上门维修服务。', L: '1+X 证书+高压电安全认证（三电方向）。', week1: '预约一次新能源车上门维修观摩日，全程观察师傅的操作步骤和安全规程。', req: { edu: 1, pat: '外勤', phys: true, skills: ['machinery'] }, tr: [['制造/工厂', .8], ['物流运输', .4]], mkt: { g: 38, c: 45, shortage: true } },
   { arc: 'ii_in_sj_1', name: '乐器匠/手工木作师傅', sal: '5k–12k', fam: '生产制造及有关人员', tags: ['匠人精神', '社群支持'], J: '学徒→工匠师傅→作坊合伙人→品牌化。', F: '木工/乐器修复/定制家具工坊。', L: '木材学基础+榫卯结构+数控木工入门。', week1: '在一个周末完成一个简单的木工小件（如砧板/小凳），记录每个工序的时间和质量控制点。', req: { edu: 1, pat: '弹性', skills: ['machinery'] }, tr: [['制造/工厂', .5], ['建筑工程', .3]], mkt: { g: 10, c: 30, shortage: true } },
 
   /* ── 16 探索者型：内向×直觉×支撑×灵活 ── */
