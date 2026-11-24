@@ -261,22 +261,22 @@ const RB_Poster = (() => {
     ctx.font = `700 25px ${FS}`;
     ctx.fillStyle = dim;
     const enSpaced = arc.en.split('').join('\u200a') + '\u200a';
-    ctx.fillText(enSpaced, 64, 628);
+    ctx.fillText(enSpaced, 64, 372);
 
     // CN 大名（左对齐）
     ctx.font = `400 128px ${FD}`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(arc.cn, 60, 752);
+    ctx.fillText(arc.cn, 60, 500);
 
     // 口号（左对齐 · 全宽使用）
     ctx.font = `400 31px ${FS}`;
     ctx.fillStyle = 'rgba(245,243,255,.8)';
     const sl = wrap(ctx, arc.slogan, 580);
-    sl.forEach((ln, i) => ctx.fillText(ln, 63, 822 + i * 46));
+    sl.forEach((ln, i) => ctx.fillText(ln, 63, 568 + i * 46));
 
     // 关键词（自动换行排布）
     ctx.font = `700 22px ${FS}`;
-    let kx = 64, ky = 916;
+    let kx = 64, ky = 668;
     arc.keywords.forEach(kw => {
       const w = ctx.measureText(kw).width + 44;
       if (kx > 64 && kx + w > W - 64) { kx = 64; ky += 62; }
@@ -291,12 +291,12 @@ const RB_Poster = (() => {
 
     // 分隔线
     ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.beginPath(); ctx.moveTo(64, 1000); ctx.lineTo(W - 64, 1000); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(64, 770); ctx.lineTo(W - 64, 770); ctx.stroke();
 
     // 三指标条
     ctx.font = `900 40px ${FS}`;
     result.chips.forEach((c, i) => {
-      const cw = (W - 64 * 2 - 32 * 2) / 3, x = 64 + i * (cw + 32), y = 1020;
+      const cw = (W - 64 * 2 - 32 * 2) / 3, x = 64 + i * (cw + 32), y = 800;
       ctx.fillStyle = 'rgba(255,255,255,.045)';
       rr(ctx, x, y, cw, 108, 20); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.12)';
@@ -314,7 +314,7 @@ const RB_Poster = (() => {
     // 稀有度
     ctx.font = `700 24px ${FS}`;
     ctx.fillStyle = colors.accent;
-    ctx.fillText(`— 这类重启者仅占全部被测者的 ${arc.rarity}%`, 64, 1160);
+    ctx.fillText(`— 这类重启者仅占全部被测者的 ${arc.rarity}%`, 64, 990);
 
     // 二维码（位置在稀有度右侧）
     const link = location.href.split('#')[0];
@@ -322,31 +322,31 @@ const RB_Poster = (() => {
       'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(link),
       220
     );
-    const qx = W - 64 - 140, qy = 1175;
+    const qx = W - 64 - 150, qy = 1030;
     if (qr) {
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
-      rr(ctx, qx, qy, 140, 140, 16); ctx.fillStyle = '#fff'; ctx.fill();
+      rr(ctx, qx, qy, 150, 150, 18); ctx.fillStyle = '#fff'; ctx.fill();
       ctx.restore();
-      ctx.drawImage(qr, qx + 10, qy + 10, 120, 120);
+      ctx.drawImage(qr, qx + 10, qy + 10, 130, 130);
     } else {
-      rr(ctx, qx, qy, 140, 140, 16);
+      rr(ctx, qx, qy, 150, 150, 18);
       ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.stroke();
       ctx.font = `700 14px ${FS}`;
       ctx.fillStyle = dim; ctx.textAlign = 'center';
-      ctx.fillText('长按识别小程序码', qx + 70, qy + 74);
+      ctx.fillText('长按识别小程序码', qx + 75, qy + 78);
     }
 
     // 左下引导文案（压缩到两行，底不溢出）
     ctx.textAlign = 'left';
     ctx.font = `900 30px ${FD}`;
     ctx.fillStyle = '#fff';
-    ctx.fillText('测测你适合怎样重启', 64, 1288);
+    ctx.fillText('测测你适合怎样重启', 64, 1098);
     ctx.font = `400 17px ${FS}`;
     ctx.fillStyle = dim;
     const host = location.hostname.replace(/^www\./, '');
-    ctx.fillText(host + ' · 16 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 64, 1318);
+    ctx.fillText(host + ' · 16 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 64, 1148);
 
     const url = cv.toDataURL('image/png');
     return url;
