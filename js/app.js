@@ -266,15 +266,13 @@
       return n1 && n2 ? dot / (Math.sqrt(n1) * Math.sqrt(n2)) : 0;
     };
 
+    const hitN = cs => profile.skills.filter(s => cs.includes(s)).length;
     const scored = cand.map(c => {
       // F1 技能重合（无技能需求的岗位给中性 50）
       const cs = c.req.skills || [];
       let f1;
       if (!cs.length) f1 = 50;
-      else {
-        const hit = profile.skills.filter(s => cs.includes(s)).length;
-        f1 = Math.round(hit / (new Set([...cs, ...profile.skills])).size * 100);
-      }
+      else f1 = Math.round(hitN(cs) / (new Set([...cs, ...profile.skills])).size * 100);
       // F2 行业迁移
       const t = (c.tr || []).find(([ind]) => ind === profile.industry);
       const f2 = Math.round((t ? t[1] : 0.35) * 100);
@@ -289,7 +287,7 @@
       if (c.mkt.shortage) f4 += 10;
       f4 = Math.round(Math.max(0, Math.min(90, f4)) / 90 * 100);
       // F5 投入可行：按技能差距与学历差估算入门周期，叠时间容量
-      const weeks = 4 + (cs.length - hit(cs)) * 6 + Math.max(0, c.req.edu - profile.eduRank) * 6;
+      const weeks = 4 + (cs.length - hitN(cs)) * 6 + Math.max(0, c.req.edu - profile.eduRank) * 6;
       const cap = profile.hours === 0 ? 95 : profile.hours === 1 ? 72 : 45;
       const f5 = Math.round(cap * Math.exp(-weeks / 18));
 
