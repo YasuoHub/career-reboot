@@ -448,7 +448,7 @@ img { display: block; max-width: 100%; }
 .career-gap.done { color: var(--accent); }
 
 /* ---------------- 弹窗 / Toast ---------------- */
-.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; }
+.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; }
 .modal.hidden { display: none; }
 .modal-mask { position: absolute; inset: 0; background: rgba(5, 5, 10, .78); backdrop-filter: blur(8px); }
 .modal-card {
@@ -461,7 +461,21 @@ img { display: block; max-width: 100%; }
   width: 100%; border-radius: 20px;
   box-shadow: 0 24px 70px -18px #000, 0 0 0 1px rgba(255, 255, 255, .08);
 }
-.modal-hint { font-size: 12px; color: var(--ink-dim); text-align: center; }
+.modal-hint { font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.6; }
+.modal-hint b { color: var(--ink); }
+
+/* 可选中链接行：微信/iOS 内置浏览器里 clipboard 可能失效，
+   给用户一条长按即选中的真实 URL，复制零死角 */
+.link-copy {
+  font-size: 11.5px; color: #8f8cab;
+  background: rgba(255, 255, 255, .05);
+  border: 1px dashed rgba(255, 255, 255, .12);
+  border-radius: 12px; padding: 9px 10px;
+  margin-top: 2px;
+  user-select: all; -webkit-user-select: all;
+  word-break: break-all; text-align: center;
+  line-height: 1.55;
+}
 .modal-btns { display: flex; gap: 10px; }
 .modal-btns .btn { flex: 1; font-size: 14px; padding: 12px 16px; }
 
