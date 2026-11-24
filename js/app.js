@@ -464,17 +464,7 @@
     if (store.isUnlocked()) { openReport(); return; }
     if (isWeChat()) { showWechatTip(); return; }
 
-    // 之前下过单但没确认成功（比如回跳时还没同步）：先核单，避免重复付款
-    const prev = store.getOrder();
-    if (prev && prev.outTradeNo) {
-      if (await verifyOrder(prev.outTradeNo)) {
-        if (result) renderResult();
-        toast('已确认付款，深度报告解锁完成');
-        openReport();
-        return;
-      }
-    }
-
+    // 弹窗立刻出现；对上一笔订单的核单放到后台，不阻塞点击反馈
     const overlay = overlayShell(`
       <div class="unlock-card">
         <p class="unlock-kicker">DEEP REPORT · 一次买断</p>
@@ -492,6 +482,46 @@
     refreshPrice();
     const payBtn = overlay.querySelector('#unlock-pay');
     overlay.querySelector('#unlock-cancel').addEventListener('click', () => overlay.remove());
+
+    // 只核最近 30 分钟内的订单（更早的多半已取消/超时），且最多等 4 秒
+    const prev = store.getOrder();
+    const prevRecent = !!(prev && prev.outTradeNo && Date.now() - Number(prev.ts || 0) < 30 * 60 * 1000);
+    if (prevRecent) {
+      const payHtml = `支付宝支付 <span data-price>${priceLabel(payPrice)}</span>`;
+      payBtn.disabled = true;
+      payBtn.textContent = '正在核实上一笔付款…';
+      let settled = false;
+      const restore = () => {
+        if (!overlay.isConnected) return;
+        payBtn.disabled = false;
+        payBtn.innerHTML = payHtml;
+        applyPrice(payPrice);
+      };
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        restore();
+      }, 4000);
+      verifyOrder(prev.outTradeNo)
+        .then(ok => {
+          clearTimeout(timer);
+          if (!overlay.isConnected) return;
+          if (!ok) {
+            if (!settled) { settled = true; restore(); }
+            return;
+          }
+          settled = true;
+          overlay.remove();
+          if (result) renderResult();
+          toast('已确认付款，深度报告解锁完成');
+          openReport();
+        })
+        .catch(() => {
+          clearTimeout(timer);
+          if (!settled) { settled = true; restore(); }
+        });
+    }
+
     payBtn.addEventListener('click', async () => {
       payBtn.disabled = true;
       payBtn.textContent = '正在创建订单…';
