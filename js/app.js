@@ -276,16 +276,7 @@
       <div class="panel">
         <div class="panel-h"><h3>六维画像</h3><span>RADAR PROFILE</span></div>
         <div class="radar-wrap"><canvas id="radar-canvas"></canvas></div>
-        <div class="axes-list">${AXES.map(a => `<div class="axis-item">${a.label} <b>${Math.round(60 + r.norm[a.key] * 0.4)}</b></div>`).join('')}</div>
       </div>
-
-      ${r.top3[0] ? `
-      <div class="panel">
-        <div class="panel-h"><h3>匹配度总览</h3><span>FIT SCORE · TOP1</span></div>
-        <div class="metric-row">${Object.entries(r.top3[0].fb).map(([k, v]) => `<div class="metric"><b>${v}</b><small>${k}</small></div>`).join('')}</div>
-        <p class="fit-total">综合匹配度 <b>${r.top3[0].scoreNum}</b> / 100</p>
-        <p class="fit-note">分值为你在本批可及方向中的横向位次（同类岗位横比），非绝对门槛</p>
-      </div>` : ''}
 
       <div class="panel">
         <div class="panel-h"><h3>方向行动 TOP3</h3><span>FIT ROADMAP</span></div>
