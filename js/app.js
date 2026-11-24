@@ -291,13 +291,29 @@
       const cap = profile.hours === 0 ? 95 : profile.hours === 1 ? 72 : 45;
       const f5 = Math.round(cap * Math.exp(-weeks / 18));
 
-      const scoreNum = Math.round((f1 * .30 + f2 * .20 + f3 * .15 + f4 * .20 + f5 * .15));
+      const _rawScore = Math.round((f1 * .30 + f2 * .20 + f3 * .15 + f4 * .20 + f5 * .15));
       return {
         rank: 0, ...c,
-        scoreNum, fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5 },
+        _rawScore, scoreNum: _rawScore,
+        fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5 },
         gapSkills: cs.filter(s => !profile.skills.includes(s)),
       };
-    }).sort((a, b) => b.scoreNum - a.scoreNum);
+    }).sort((a, b) => b._rawScore - a._rawScore);
+
+    /* 展示层归一化：分值为「你在本批可及方向中的横向位次」——
+       池内各维 min→55 / max→95 线性映射后再按原权重合成。
+       底层打分维度、公式与排序标准完全不变，只改展示口径，
+       避免 30~40 的裸分值削弱用户信任。 */
+    scored.forEach(c => {
+      Object.entries(c.fb).forEach(([k, v]) => {
+        const lo = Math.min(...scored.map(x => x.fb[k]));
+        const hi = Math.max(...scored.map(x => x.fb[k]));
+        c.fb[k] = hi === lo ? 75 : Math.round(55 + 40 * ((v - lo) / (hi - lo)));
+      });
+      c.scoreNum = Math.round(
+        c.fb['技能重合'] * .30 + c.fb['行业迁移'] * .20 + c.fb['性格延续'] * .15 +
+        c.fb['市场时机'] * .20 + c.fb['投入可行'] * .15);
+    });
 
     scored.slice(0, 3).forEach((c, i) => (c.rank = '#' + (i + 1)));
 
@@ -320,6 +336,7 @@
   let computingTimer;
   function finish() {
     result = score();
+    purgeDrafts();
     if (!result || !result.arc) {
       console.error(new Error('SCORING_RESULT_EMPTY'));
       toast('分析出了点状况，返回重来一次吧');
@@ -398,6 +415,7 @@
           ${Object.entries(r.top3[0].fb).map(([k, v]) => `<div class="metric"><b>${v}</b><small>${k}</small></div>`).join('')}
         </div>
         <p class="fit-total">综合匹配度 <b>${r.top3[0].scoreNum}</b> / 100</p>
+        <p class="fit-note">分值为你在本批可及方向中的横向位次（同类岗位横比），非绝对门槛</p>
       </div>` : ''}
 
       <div class="panel">
@@ -435,22 +453,62 @@
   }
 
   /* ---------- 海报 ---------- */
+  function lockScroll() {
+    document.documentElement.classList.add('lock');
+    document.body.classList.add('lock');
+  }
+  function unlockScroll() {
+    document.documentElement.classList.remove('lock');
+    document.body.classList.remove('lock');
+  }
+  function closeModal() { $('#poster-modal').classList.add('hidden'); unlockScroll(); }
+
   async function openPoster() {
     try {
       const url = await RB_Poster.buildShare(result);
-      // 弹窗一开就清 toast：toast 压在按钮上会吞掉点击（在旧内核上尤甚）
+      // 弹窗一开就清 toast：toast 压在按钮上会吞掉点击（旧内核上尤甚）
       const tEl = $('#toast');
       tEl.classList.remove('show');
       clearTimeout(toastTimer);
       $('#poster-img').src = url;
-      $('#poster-download').href = url;
-      $('#poster-download').download = `重启人格-${result.arc.cn}.png`;
       $('#link-copy').textContent = location.href.split('#')[0];
+      lockScroll();
       $('#poster-modal').classList.remove('hidden');
     } catch (e) {
       console.error(e);
       toast('海报生成失败，刷新后重试');
     }
+  }
+
+  /* 保存到相册：Web Share(files) → 系统保存面板 → 文件选择器 → 下载兜底，
+     iOS/安卓微信里走系统分享面板，选「存储图像」即进相册 */
+  async function saveImage() {
+    const dataUrl = $('#poster-img').src;
+    if (!dataUrl.startsWith('data:image')) { toast('海报还没生成好'); return; }
+    let blob;
+    try { blob = await (await fetch(dataUrl)).blob(); }
+    catch (_) { toast('图片读取失败，长按图片保存试试'); return; }
+    const file = new File([blob], '重启人格图鉴.png', { type: 'image/png' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '重启人格图鉴' });
+        return;
+      }
+    } catch (_) { /* 用户取消分享，走兜底 */ }
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({ suggestedName: file.name });
+        const w = await handle.createWritable();
+        await w.write(file); await w.close();
+        return;
+      } catch (_) { /* 用户取消选择器，走兜底 */ }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = file.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('已开始下载；若没进相册，长按上方图片保存');
   }
 
   /* ---------- 分享 ---------- */
@@ -464,23 +522,29 @@
   function restart() {
     clearTimeout(computingTimer);
     answers = {};
-    for (const k in multiDraft) delete multiDraft[k];
+    purgeDrafts();
     result = null;
     go('quiz');
     renderQuiz(false);
   }
+
+  function purgeDrafts() { for (const k in multiDraft) delete multiDraft[k]; }
 
   /* ---------- 事件绑定 ---------- */
   $('#btn-start').addEventListener('click', () => {
     if (currentQIndex() >= QUESTIONS.length) finish();
     else { go('quiz'); renderQuiz(false); }
   });
-  $('#btn-back').addEventListener('click', () => { initCover(); go('cover'); });
+  $('#btn-back').addEventListener('click', () => { purgeDrafts(); initCover(); go('cover'); });
 
   $('#poster-share').addEventListener('click', doShare);
+  $('#poster-download').addEventListener('click', saveImage);
 
   document.querySelectorAll('[data-close]').forEach(el =>
-    el.addEventListener('click', () => $('#poster-modal').classList.add('hidden')));
+    el.addEventListener('click', closeModal));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#poster-modal').classList.contains('hidden')) closeModal();
+  });
 
   /* ---------- 启动 ---------- */
   initCover();
