@@ -1,0 +1,24 @@
+js/app.js
+  s_62672facbf17c2::t_ecc2877b1eacbc 260
+  s_62672facbf17c2::t_c384463c4542d9 261-266
+css/style.css
+  s_62672facbf17c2::t_e91d14704f123f 281,283-285,288,297-301,305-308,310
+js/poster.js
+  s_62672facbf17c2::t_bfb8aed304a1c3 236,238-240,243,248,259-260,266,271,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8ba1665e55b361e986a1056e8c76386817b70ef1",
+  "prompts": {},
+  "sessions": {
+    "s_62672facbf17c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3846b109-1323-4c9d-bb7a-546d577a3bd5",
+        "model": "xing4.1-flash-preview"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
