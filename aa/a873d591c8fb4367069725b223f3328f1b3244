@@ -1,0 +1,31 @@
+js/report.js
+  s_88739e2e3fe509::t_fede2304ba33a1 2
+js/app.js
+  s_88739e2e3fe509::t_1e276a27ba0085 70-71
+  s_88739e2e3fe509::t_c6e0e0fe79b14f 72-74
+  s_88739e2e3fe509::t_c1da379c1d2c9f 75-90,289-300,320-323,361-373,375-383,392-393,480-488,492
+api/alipay/price.js
+  s_88739e2e3fe509::t_f1decc7a298efd 1-12
+package.json
+  s_88739e2e3fe509::t_eeed436f78756c 14
+css/style.css
+  s_88739e2e3fe509::t_d2cccf36d0c19b 304-307,309-310,312-333,436-508,660-678
+index.html
+  s_88739e2e3fe509::t_ac16080268d844 16,124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "aaa873d591c8fb4367069725b223f3328f1b3244",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
