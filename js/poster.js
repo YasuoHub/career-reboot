@@ -314,7 +314,7 @@ const RB_Poster = (() => {
     ctx.fillStyle = dim;
     const host = location.hostname.replace(/^www\./, '');
     ctx.fillText(host, 64, 1148);
-    ctx.fillText('15 道题 · 约 90 秒 · 结果只存本机不上传', 64, 1192);
+    ctx.fillText('16 道题 · 约 96 秒 · 结果只存本机不上传', 64, 1192);
     ctx.font = `400 18px ${FS}`;
     ctx.fillStyle = 'rgba(255,255,255,.35)';
     ctx.fillText('趣味性格探索，不构成医疗、心理诊断或就业承诺', 64, 1262);
