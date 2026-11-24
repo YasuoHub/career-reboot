@@ -298,6 +298,44 @@
     }
   }
 
+  /* 深度报告卡片：默认只露一半，展开后出现解锁按钮 */
+  function bindTeaser() {
+    const card = document.getElementById('report-teaser');
+    const expandBtn = document.getElementById('teaser-expand');
+    const unlockBtn = document.getElementById('btn-unlock');
+    if (!card || !expandBtn || !unlockBtn) return;
+
+    const body = card.querySelector('.teaser-body');
+    let expanded = false;
+    const expand = () => {
+      if (expanded) return;
+      expanded = true;
+      const target = body ? body.scrollHeight + 42 : 560;
+      card.classList.remove('is-collapsed');
+      card.classList.add('is-expanded');
+      card.style.maxHeight = `${Math.min(target, 960)}px`;
+      card.setAttribute('aria-expanded', 'true');
+      expandBtn.setAttribute('aria-expanded', 'true');
+      expandBtn.classList.add('gone');
+      unlockBtn.classList.remove('is-hidden');
+      unlockBtn.classList.add('reveal');
+      setTimeout(() => { card.style.maxHeight = 'none'; }, 520);
+      setTimeout(() => unlockBtn.classList.remove('reveal'), 700);
+      // 展开后把解锁按钮带入视野，避免被新增内容推到屏幕外
+      setTimeout(() => {
+        if (!unlockBtn.isConnected) return;
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        unlockBtn.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      }, 360);
+    };
+
+    expandBtn.addEventListener('click', e => { e.stopPropagation(); expand(); });
+    card.addEventListener('click', expand);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); expand(); }
+    });
+  }
+
   function renderResult() {
     if (!result || !result.arc) { go('cover'); toast('结果没接住，请重测一次'); return; }
     const r = result, arc = r.arc, colors = arc.colors;
@@ -307,6 +345,7 @@
     store.saveLast(r);
     const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
     const avatarFile = arc.avatarF.replace(/-f\.webp$/, r.gender === '男' ? '-m.webp' : '-f.webp');
+    const unlocked = store.isUnlocked();
 
     $('#res-body').innerHTML = `
       <p class="res-context">为「${r.context}」的你校准</p>
@@ -358,24 +397,31 @@
           </div>`).join('')}
       </div>
 
-      ${store.isUnlocked() ? '' : `
-      <section class="report-teaser">
-        <div class="teaser-h"><span>深度报告</span><em>DEEP REPORT</em></div>
-        <h3>结果页给你方向，深度报告给你一条能照着走的路线。</h3>
-        <ul class="teaser-list">
-          <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
-          <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
-          <li><b>怎么讲</b>简历改写示例 + 面试高频问题，把上一段经历讲成优势。</li>
-          <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
-        </ul>
-        <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 16 道作答生成，不套模板，数据只在本机。</p>
-      </section>`}
+      ${unlocked ? '' : `
+      <div class="teaser-wrap" id="teaser-wrap">
+        <section class="report-teaser is-collapsed" id="report-teaser" role="button" tabindex="0" aria-expanded="false" aria-label="展开查看完整深度报告内容">
+          <div class="teaser-body">
+            <div class="teaser-h"><span>深度报告</span><em>DEEP REPORT</em></div>
+            <h3>结果页给你方向，深度报告给你一条能照着走的路线。</h3>
+            <ul class="teaser-list">
+              <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
+              <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
+              <li><b>怎么讲</b>简历改写示例 + 面试高频问题，把上一段经历讲成优势。</li>
+              <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
+            </ul>
+            <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 16 道作答生成，不套模板，数据只在本机。</p>
+          </div>
+        </section>
+        <button class="teaser-expand" id="teaser-expand" type="button" aria-controls="report-teaser" aria-expanded="false">
+          <span>展开看完整报告内容</span><i aria-hidden="true">↓</i>
+        </button>
+      </div>`}
 
       <div class="res-ctas">
-        <button id="btn-unlock" class="btn-unlock${store.isUnlocked() ? ' is-owned' : ''}" type="button">
-          <span class="unlock-main">${store.isUnlocked() ? '查看深度报告' : `解锁深度报告 <b data-price>${priceLabel(payPrice)}</b>`}</span>
-          <span class="unlock-sub">${store.isUnlocked() ? '已解锁 · 可随时回看' : '人格深读 · 12 周路线 · 简历与面试话术'}</span>
-          ${store.isUnlocked() ? '' : '<i class="unlock-spark" aria-hidden="true">✦</i>'}
+        <button id="btn-unlock" class="btn-unlock${unlocked ? ' is-owned' : ' is-hidden'}" type="button">
+          <span class="unlock-main">${unlocked ? '查看深度报告' : `解锁深度报告 <b data-price>${priceLabel(payPrice)}</b>`}</span>
+          <span class="unlock-sub">${unlocked ? '已解锁 · 可随时回看' : '人格深读 · 12 周路线 · 简历与面试话术'}</span>
+          ${unlocked ? '' : '<i class="unlock-spark" aria-hidden="true">✦</i>'}
         </button>
         <div class="cta-row">
           <button id="btn-poster" class="btn btn-primary">生成分享海报</button>
@@ -388,6 +434,7 @@
     $('#btn-poster').addEventListener('click', openPoster);
     $('#btn-unlock').addEventListener('click', () => { if (store.isUnlocked()) openReport(); else openUnlock(); });
     $('#btn-redo').addEventListener('click', restart);
+    bindTeaser();
     go('result');
     bindAvatar();
     refreshPrice();

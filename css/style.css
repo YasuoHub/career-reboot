@@ -433,13 +433,31 @@ img { display: block; max-width: 100%; }
 }
 .tag.hot { color: #ffb4c8; border-color: #ffb4c855; }
 
-/* 深度报告预告 */
+/* 深度报告预告（折叠态只露一半，展开后出现解锁按钮） */
+.teaser-wrap { margin: 26px 0 4px; }
 .report-teaser {
-  margin: 26px 0 4px; padding: 20px 18px;
-  border-radius: 20px;
+  position: relative; overflow: hidden;
+  padding: 20px 18px; border-radius: 20px;
   background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 14%, transparent), rgba(255, 255, 255, .03));
   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  transition: max-height .52s cubic-bezier(.22, 1, .36, 1), border-color .3s, box-shadow .3s;
 }
+.report-teaser.is-collapsed { max-height: 172px; cursor: pointer; }
+.report-teaser.is-collapsed::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 64%;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg) 62%, transparent));
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 55%);
+  mask-image: linear-gradient(180deg, transparent, #000 55%);
+}
+.report-teaser.is-collapsed .teaser-body {
+  -webkit-mask-image: linear-gradient(180deg, #000 28%, rgba(0, 0, 0, .5) 74%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 28%, rgba(0, 0, 0, .5) 74%, transparent 100%);
+}
+.report-teaser.is-collapsed:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.report-teaser.is-expanded { box-shadow: 0 20px 60px -30px var(--glow); }
+.teaser-body { position: relative; }
 .teaser-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 .teaser-h span { font-size: 11px; letter-spacing: .22em; color: var(--accent); font-weight: 800; }
 .teaser-h em { font-style: normal; font-size: 9.5px; letter-spacing: .2em; color: #6f6c86; }
@@ -453,10 +471,35 @@ img { display: block; max-width: 100%; }
 .teaser-note { font-size: 11px; color: #6f6c86; margin-top: 14px; line-height: 1.65; }
 .teaser-note b { color: var(--accent); font-weight: 800; }
 
+/* 展开引导 */
+.teaser-expand {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: 10px; padding: 12px 18px;
+  border-radius: 999px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent); font-family: inherit; font-size: 13px; font-weight: 800;
+  letter-spacing: .02em;
+  transition: background .25s, border-color .25s;
+}
+.teaser-expand:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.teaser-expand i { font-style: normal; font-size: 12px; animation: teaserNudge 1.6s ease-in-out infinite; }
+@keyframes teaserNudge {
+  0%, 100% { transform: translateY(0); opacity: .65; }
+  50% { transform: translateY(4px); opacity: 1; }
+}
+.teaser-expand.gone { display: none; }
+
 /* 结果页 CTA：解锁按钮独占一行，其余两个并排 */
 .res-ctas { display: flex; flex-direction: column; gap: 12px; margin: 24px 0 16px; }
 .cta-row { display: flex; gap: 12px; }
 .cta-row .btn { flex: 1; }
+.btn-unlock.is-hidden { display: none; }
+.btn-unlock.reveal { animation: unlockReveal .55s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes unlockReveal {
+  from { opacity: 0; transform: translateY(16px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .btn-unlock {
   position: relative; width: 100%; overflow: hidden;
@@ -503,7 +546,8 @@ img { display: block; max-width: 100%; }
 .btn-unlock.is-owned::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-unlock::after, .btn-unlock .unlock-spark, .arc-avatar-skel::after { animation: none; }
+  .btn-unlock::after, .btn-unlock .unlock-spark, .btn-unlock.reveal,
+  .arc-avatar-skel::after, .teaser-expand i { animation: none; }
 }
 
 .res-legal { font-size: 11px; color: #6f6c86; line-height: 1.75; text-align: center; }
