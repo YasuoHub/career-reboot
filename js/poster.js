@@ -1,0 +1,335 @@
+/* ============================================================
+   海报 / 雷达图 / 彩带 / 分享 —— 纯 Canvas，无依赖
+   ============================================================ */
+
+const RB_Poster = (() => {
+
+  /* ---------- 通用 ---------- */
+  function rr(ctx, x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  }
+
+  function wrap(ctx, text, maxWidth) {
+    const lines = [];
+    let line = '';
+    for (const ch of text) {
+      if (line && ctx.measureText(line + ch).width > maxWidth) { lines.push(line); line = ch; }
+      else line += ch;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  const FS = "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+  const FD = "'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+
+  /* ---------- 雷达图（结果页） ---------- */
+  function drawRadar(canvas, normScores, accent) {
+    const dpr = window.devicePixelRatio || 1;
+    const size = 268;
+    canvas.width = size * dpr; canvas.height = size * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const cx = size / 2, cy = size / 2, R = size * 0.37;
+    const n = normScores.length;
+    const angle = i => -Math.PI / 2 + (Math.PI * 2 * i) / n;
+
+    const hex = accent.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+
+    let t = 0;
+    const dur = 650;
+    const step = ts => {
+      if (!t) t = ts;
+      const p = Math.min((ts - t) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      ctx.clearRect(0, 0, size, size);
+
+      // 网格
+      for (let ring = 1; ring <= 3; ring++) {
+        ctx.beginPath();
+        const rr_ = R * ring / 3;
+        for (let i = 0; i < n; i++) {
+          const a = angle(i);
+          const x = cx + Math.cos(a) * rr_, y = cy + Math.sin(a) * rr_;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(255,255,255,${0.07 + ring * 0.02})`;
+        ctx.stroke();
+      }
+      // 轴线 + 标签
+      ctx.font = `500 11.5px ${FS}`;
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+        ctx.strokeStyle = 'rgba(255,255,255,.06)';
+        ctx.stroke();
+        const lx = cx + Math.cos(a) * (R + 19), ly = cy + Math.sin(a) * (R + 19);
+        ctx.fillStyle = normScores[i] >= 70 ? `rgba(${r},${g},${b},.95)` : 'rgba(255,255,255,.5)';
+        ctx.fillText(normScores[i].toFixed(0), lx, ly);
+      }
+      // 数据面
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        const v = R * normScores[i] / 100 * eased;
+        const x = cx + Math.cos(a) * v, y = cy + Math.sin(a) * v;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${r},${g},${b},.16)`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(${r},${g},${b},.9)`;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      // 顶点
+      for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        const v = R * normScores[i] / 100 * eased;
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * v, cy + Math.sin(a) * v, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},1)`;
+        ctx.fill();
+      }
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- 彩带 ---------- */
+  function confetti(color) {
+    const cv = document.createElement('canvas');
+    cv.className = 'confetti';
+    cv.width = innerWidth; cv.height = innerHeight;
+    document.body.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const palette = ['#ffffff', color, '#ff5fae', '#54c5ff', '#ffb020'];
+    const parts = Array.from({ length: 90 }, () => ({
+      x: innerWidth * (.3 + Math.random() * .4),
+      y: -20 - Math.random() * innerHeight * .3,
+      vx: (Math.random() - .5) * 3.4,
+      vy: 2.6 + Math.random() * 3.4,
+      s: 4 + Math.random() * 7,
+      r: Math.random() * Math.PI,
+      vr: (Math.random() - .5) * .24,
+      c: palette[(Math.random() * palette.length) | 0],
+      a: Math.random() > .5,
+    }));
+    let start = performance.now(), alive = true;
+    setTimeout(() => (alive = false), 2400);
+    (function loop(now) {
+      const el = now - start;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      const fade = el > 1800 ? Math.max(0, 1 - (el - 1800) / 600) : 1;
+      for (const p of parts) {
+        p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vy += .045;
+        ctx.save();
+        ctx.globalAlpha = fade * (.9 - p.y / innerHeight * .4);
+        ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c;
+        if (p.a) {
+          ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.s / 2.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      if (alive && el < 3200) requestAnimationFrame(loop);
+      else cv.remove();
+    })(performance.now());
+  }
+
+  /* ---------- QR（外网服务，失败自动降级为短链文字） ---------- */
+  function loadQR(url, size) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      const timer = setTimeout(() => resolve(null), 3500);
+      img.onload = () => { clearTimeout(timer); resolve(img); };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- 分享海报 ---------- */
+  async function buildShare(result) {
+    const W = 750, H = 1334;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const { ARCHETYPES } = window.RB_DATA;
+    const arc = ARCHETYPES[result.archetype];
+    const colors = arc.colors;
+
+    // 底
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#12101f');
+    bg.addColorStop(.55, colors.deep);
+    bg.addColorStop(1, '#070610');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 光斑
+    const glow = ctx.createRadialGradient(W * .82, 150, 30, W * .82, 150, 430);
+    glow.addColorStop(0, colors.glow);
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, 640);
+    const glow2 = ctx.createRadialGradient(W * .1, 1050, 30, W * .1, 1050, 400);
+    glow2.addColorStop(0, 'rgba(84,197,255,.14)');
+    glow2.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow2; ctx.fillRect(0, 700, W, 634);
+
+    // 内边框
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.lineWidth = 1.5;
+    rr(ctx, 26, 26, W - 52, H - 52, 44); ctx.stroke();
+
+    const ink = '#f5f3ff', dim = 'rgba(245,243,255,.62)';
+
+    // 顶部小字
+    ctx.textAlign = 'left';
+    ctx.font = `700 21px ${FS}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText('REBOOT PERSONALITY №' + arc.num, 64, 112);
+    ctx.font = `400 24px ${FS}`;
+    ctx.fillStyle = dim;
+    ctx.fillText('人生重启 · 人格图鉴', 64, 148);
+
+    // 水印大数字
+    ctx.save();
+    ctx.font = `400 300px ${FD}`;
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.textAlign = 'right';
+    ctx.fillText(arc.num, W - 48, 380);
+    ctx.restore();
+
+    // EN 名
+    ctx.font = `700 25px ${FS}`;
+    ctx.fillStyle = dim;
+    const enSpaced = arc.en.split('').join('\u200a') + '\u200a';
+    ctx.fillText(enSpaced, 64, 372);
+
+    // CN 大名
+    ctx.font = `400 128px ${FD}`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(arc.cn, 60, 500);
+
+    // 口号
+    ctx.font = `400 31px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.8)';
+    const sl = wrap(ctx, arc.slogan, W - 190);
+    sl.forEach((ln, i) => ctx.fillText(ln, 63, 568 + i * 46));
+
+    // 关键词（自动换行排布）
+    ctx.font = `700 22px ${FS}`;
+    let kx = 64, ky = 668;
+    arc.keywords.forEach(kw => {
+      const w = ctx.measureText(kw).width + 44;
+      if (kx > 64 && kx + w > W - 64) { kx = 64; ky += 62; }
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      rr(ctx, kx, ky, w, 46, 23); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(kw, kx + 22, ky + 24);
+      kx += w + 14;
+    });
+    ctx.textBaseline = 'alphabetic';
+
+    // 分隔线
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.beginPath(); ctx.moveTo(64, 770); ctx.lineTo(W - 64, 770); ctx.stroke();
+
+    // 三指标条
+    ctx.font = `900 40px ${FS}`;
+    result.chips.forEach((c, i) => {
+      const cw = (W - 64 * 2 - 32 * 2) / 3, x = 64 + i * (cw + 32), y = 800;
+      ctx.fillStyle = 'rgba(255,255,255,.045)';
+      rr(ctx, x, y, cw, 108, 20); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      rr(ctx, x, y, cw, 108, 20); ctx.stroke();
+      ctx.fillStyle = colors.accent;
+      ctx.textAlign = 'center';
+      ctx.fillText(c.pct + '', x + cw / 2, y + 60);
+      ctx.font = `400 21px ${FS}`;
+      ctx.fillStyle = dim;
+      ctx.fillText(c.name, x + cw / 2, y + 92);
+      ctx.font = `900 40px ${FS}`;
+      ctx.textAlign = 'left';
+    });
+
+    // 稀有度
+    ctx.font = `700 24px ${FS}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText(`— 这类重启者仅占全部被测者的 ${arc.rarity}%`, 64, 990);
+
+    // 二维码
+    const link = location.href.split('#')[0];
+    const qr = await loadQR(
+      'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(link),
+      220
+    );
+    const qx = W - 64 - 150, qy = 1030;
+    if (qr) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
+      rr(ctx, qx, qy, 150, 150, 18); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.restore();
+      ctx.drawImage(qr, qx + 10, qy + 10, 130, 130);
+    } else {
+      rr(ctx, qx, qy, 150, 150, 18);
+      ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.stroke();
+      ctx.font = `700 15px ${FS}`;
+      ctx.fillStyle = dim; ctx.textAlign = 'center';
+      ctx.fillText('长按识别小程序码', qx + 75, qy + 78);
+    }
+
+    // 左下引导文案
+    ctx.textAlign = 'left';
+    ctx.font = `900 38px ${FD}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText('测测你适合怎样重启', 64, 1098);
+    ctx.font = `400 23px ${FS}`;
+    ctx.fillStyle = dim;
+    const host = location.hostname.replace(/^www\./, '');
+    ctx.fillText(host, 64, 1148);
+    ctx.fillText('8 道题 · 60 秒 · 结果只存本机不上传', 64, 1192);
+    ctx.font = `400 18px ${FS}`;
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fillText('趣味性格探索，不构成医疗、心理诊断或就业承诺', 64, 1262);
+
+    const url = cv.toDataURL('image/png');
+    return url;
+  }
+
+  /* ---------- 分享动作 ---------- */
+  async function share(title, text) {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: location.href });
+        return true;
+      }
+    } catch (_) { /* 用户取消，忽略 */ }
+    try {
+      await navigator.clipboard.writeText(location.href);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  return { drawRadar, confetti, buildShare, share, loadQR };
+})();
