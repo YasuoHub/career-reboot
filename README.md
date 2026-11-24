@@ -43,6 +43,10 @@ vercel --prod     # 上线 production
 
 面板：vercel.com → Import `career-reboot` 目录 → Deploy。
 
+- **缓存纪律**：改动 js/css 后，把 index.html 里全部 `?v=N` 参数 +1 再部署。
+  Vercel/CDN 会缓存静态资源、浏览器也会吃旧文件——曾因用户测到修复前的
+  旧版 data.js 白屏而返工，版本号是强制刷新的唯一手段。
+
 **绑自有域名**：Deploy 页 Domain → Add → 输入你的域名 → 按提示把 DNS 的
 `CNAME` 指向 `cname.vercel-dns.com`（根域用 A 记录指 `76.76.21.21`）。
 
