@@ -50,6 +50,7 @@
 
   let answers = {};   // qid -> option index（多选题存索引数组）
   let result = null;  // 上一次计分结果
+  const multiDraft = {}; // qid -> Set，多选勾选草稿（跨重渲染保持）
 
   /* ---------- Toast ---------- */
   let toastTimer;
@@ -109,30 +110,30 @@
     const panel = $('#q-panel');
     if (!animate) panel.style.animation = 'none';
     if (q.multi) {
-      const sel = new Set(Array.isArray(answers[q.id]) ? answers[q.id] : []);
+      const draft = multiDraft[q.id] || (multiDraft[q.id] = new Set(answers[q.id] || []));
+      const count = () => draft.size;
       panel.innerHTML = `
         <span class="q-tag">${q.tag} · 第 ${qi + 1} 问</span>
         <h2 class="q-text">${q.text}</h2>
         <div class="multi-opts">
           ${q.opts.map((o, i) => `
-            <button class="opt opt-chip${sel.has(i) ? ' sel' : ''}" data-i="${i}" aria-label="选项 ${o.t}">
-              <span class="opt-mark">${sel.has(i) ? '✓' : ''}</span>
+            <button class="opt opt-chip${draft.has(i) ? ' sel' : ''}" data-i="${i}" aria-label="选项 ${o.t}">
+              <span class="opt-mark">${draft.has(i) ? '✓' : ''}</span>
               <span>${o.t}</span>
             </button>`).join('')}
         </div>
         <div class="confirm-row">
-          <button id="btn-multi" class="btn btn-primary">确认本题（已选 ${sel.size}）</button>
+          <button id="btn-multi" class="btn btn-primary">确认本题（已选 ${count()}）</button>
         </div>`;
       panel.querySelectorAll('.opt-chip').forEach(btn =>
         btn.addEventListener('click', () => {
-          const s = new Set(sel);
-          s.has(+btn.dataset.i) ? s.delete(+btn.dataset.i) : s.add(+btn.dataset.i);
-          sel.clear(); [...s].forEach(v => sel.add(v));
+          draft.has(+btn.dataset.i) ? draft.delete(+btn.dataset.i) : draft.add(+btn.dataset.i);
           renderQuiz(false);
         }));
       $('#btn-multi').addEventListener('click', () => {
-        if (!sel.size) { toast('至少勾一项，不然没法给你校准'); return; }
-        answers[q.id] = [...sel];
+        if (!draft.size) { toast('至少勾一项，不然没法给你校准'); return; }
+        answers[q.id] = [...draft];
+        delete multiDraft[q.id];
         store.bumpTotal();
         advance(panel);
       });
@@ -461,6 +462,7 @@
   function restart() {
     clearTimeout(computingTimer);
     answers = {};
+    for (const k in multiDraft) delete multiDraft[k];
     result = null;
     go('quiz');
     renderQuiz(false);
