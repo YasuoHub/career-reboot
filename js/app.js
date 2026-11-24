@@ -111,7 +111,13 @@
         </div>
         ${currentQi > 0 ? '<button id="btn-prev-q" class="btn btn-ghost btn-prev">← 上一题</button>' : ''}`;
       panel.querySelectorAll('.opt').forEach(btn =>
-        btn.addEventListener('click', () => { answers[q.id] = +btn.dataset.i; store.bumpTotal(); goNextQ(); }));
+        btn.addEventListener('click', () => {
+          // 先给选中反馈：只点亮当前项，其余变淡
+          panel.querySelectorAll('.opt').forEach(b => { b.classList.remove('sel'); b.style.opacity = '.35'; });
+          btn.classList.add('sel'); btn.style.opacity = '1';
+          answers[q.id] = +btn.dataset.i; store.bumpTotal();
+          setTimeout(() => goNextQ(), 320);
+        }));
     }
     const prevBtn = panel.querySelector('#btn-prev-q');
     if (prevBtn) prevBtn.addEventListener('click', goPrevQ);
