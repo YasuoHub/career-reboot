@@ -13,9 +13,28 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/style.css?v=2" />
 </head>
 <body>
+  <!-- 首屏加载层（关键样式内联，主样式未就绪也安全；JS 侧有移除兜底） -->
+  <div id="loader">
+    <style>
+      #loader{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b14;transition:opacity .45s}
+      #loader.done{opacity:0;pointer-events:none}
+      #loader .l-box{display:flex;flex-direction:column;align-items:center;gap:26px}
+      #loader .l-title{font-family:'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei',sans-serif;font-size:34px;color:#f4f2ff;letter-spacing:.08em}
+      #loader .l-sub{font-size:11px;color:#a9a6c2;letter-spacing:.3em}
+      #loader .l-bar{width:150px;height:3px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+      #loader .l-bar i{display:block;height:100%;width:38%;border-radius:99px;background:linear-gradient(90deg,#8b7bff,#5ad2e6);animation:lrun 1.05s ease-in-out infinite}
+      @keyframes lrun{0%{transform:translateX(-115%)}100%{transform:translateX(290%)}}
+    </style>
+    <div class="l-box">
+      <p class="l-title">重启人格图鉴</p>
+      <div class="l-bar"><i></i></div>
+      <p class="l-sub">CHECKING YOUR REBOOT KIT</p>
+    </div>
+  </div>
+
   <!-- 动态背景层 -->
   <div class="bg" aria-hidden="true">
     <div class="bg-blob b1"></div>
@@ -81,8 +100,8 @@
 
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <script src="./js/data.js"></script>
-  <script src="./js/poster.js"></script>
-  <script src="./js/app.js"></script>
+  <script src="./js/data.js?v=2"></script>
+  <script src="./js/poster.js?v=2"></script>
+  <script src="./js/app.js?v=2"></script>
 </body>
 </html>
