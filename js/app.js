@@ -51,6 +51,7 @@
   let answers = {};   // qid -> option index（多选题存索引数组）
   let result = null;  // 上一次计分结果
   const multiDraft = {}; // qid -> Set，多选勾选草稿（跨重渲染保持）
+  let currentQi = 0;     // 当前题目索引（显式追踪，支持回退上一题）
 
   /* ---------- Toast ---------- */
   let toastTimer;
@@ -89,80 +90,86 @@
     return Array.isArray(a) ? a.length > 0 : a !== undefined;
   }
 
-  function currentQIndex() {
-    for (let i = 0; i < QUESTIONS.length; i++) {
-      if (!answered(QUESTIONS[i])) return i;
-    }
-    return QUESTIONS.length;
+  function goNextQ() {
+    if (currentQi < QUESTIONS.length - 1) { currentQi++; renderQuiz(true); }
+    else finish();
+  }
+
+  function goPrevQ() {
+    if (currentQi > 0) { currentQi--; renderQuiz(true); }
   }
 
   function renderQuiz(animate = true) {
-    const qi = currentQIndex();
-    if (qi >= QUESTIONS.length) return finish();
-    const q = QUESTIONS[qi];
-
-    // 进度点
-    [...dotsEl.children].forEach((d, i) => {
-      d.className = answered(QUESTIONS[i]) ? 'done' : (i === qi ? 'now' : '');
-    });
-    $('#quiz-stage').textContent = `第 ${qi + 1} / ${QUESTIONS.length} 弹`;
-
+    if (currentQi >= QUESTIONS.length) { finish(); return; }
+    const q = QUESTIONS[currentQi];
     const panel = $('#q-panel');
     if (!animate) panel.style.animation = 'none';
+
+    // 进度点：当前题及之前已答的标 done
+    [...dotsEl.children].forEach((d, i) => {
+      d.className = (i < currentQi || (i === currentQi && answered(QUESTIONS[i]))) ? 'done' : (i === currentQi ? 'now' : '');
+    });
+    $('#quiz-stage').textContent = `第 ${currentQi + 1} / ${QUESTIONS.length} 弹`;
+
+    const letters = 'ABCDEFGHIJKLMNO';
+
     if (q.multi) {
       const draft = multiDraft[q.id] || (multiDraft[q.id] = new Set(answers[q.id] || []));
-      const count = () => draft.size;
+      const selArr = [...draft];
       panel.innerHTML = `
-        <span class="q-tag">${q.tag} · 第 ${qi + 1} 问</span>
+        <span class="q-tag">${q.tag} · 第 ${currentQi + 1} 问</span>
         <h2 class="q-text">${q.text}</h2>
         <div class="multi-opts">
           ${q.opts.map((o, i) => `
-            <button class="opt opt-chip${draft.has(i) ? ' sel' : ''}" data-i="${i}" aria-label="选项 ${o.t}">
-              <span class="opt-mark">${draft.has(i) ? '✓' : ''}</span>
+            <button class="opt opt-chip${selArr.includes(i) ? ' sel' : ''}" data-i="${i}" aria-label="选项 ${o.t}">
+              <span class="opt-mark">${selArr.includes(i) ? '✓' : ''}</span>
               <span>${o.t}</span>
             </button>`).join('')}
         </div>
         <div class="confirm-row">
-          <button id="btn-multi" class="btn btn-primary">确认本题（已选 ${count()}）</button>
-        </div>`;
+          <button id="btn-multi" class="btn btn-primary">确认本题（已选 ${draft.size}）</button>
+        </div>
+        ${currentQi > 0 ? '<button id="btn-prev-q" class="btn btn-ghost btn-prev">← 上一题</button>' : ''}`;
+      // 多选局部更新，不重绘面板防闪
       panel.querySelectorAll('.opt-chip').forEach(btn =>
         btn.addEventListener('click', () => {
-          draft.has(+btn.dataset.i) ? draft.delete(+btn.dataset.i) : draft.add(+btn.dataset.i);
-          renderQuiz(false);
+          const idx = +btn.dataset.i;
+          draft.has(idx) ? draft.delete(idx) : draft.add(idx);
+          const isSel = draft.has(idx);
+          btn.classList.toggle('sel', isSel);
+          btn.querySelector('.opt-mark').textContent = isSel ? '✓' : '';
+          $('#btn-multi').textContent = `确认本题（已选 ${draft.size}）`;
         }));
       $('#btn-multi').addEventListener('click', () => {
         if (!draft.size) { toast('至少勾一项，不然没法给你校准'); return; }
         answers[q.id] = [...draft];
         delete multiDraft[q.id];
         store.bumpTotal();
-        advance(panel);
+        goNextQ();
       });
     } else {
-      const letters = 'ABCDEFGHIJKLMNO';
+      const selIdx = answers[q.id]; // undefined 表示未选
       panel.innerHTML = `
-        <span class="q-tag">${q.tag} · 第 ${qi + 1} 问</span>
+        <span class="q-tag">${q.tag} · 第 ${currentQi + 1} 问</span>
         <h2 class="q-text">${q.text}</h2>
         <div class="q-opts">
           ${q.opts.map((o, i) => `
-            <button class="opt" data-i="${i}" aria-label="选项 ${letters[i]}：${o.t}">
+            <button class="opt${selIdx === i ? ' sel' : ''}" data-i="${i}" aria-label="选项 ${letters[i]}：${o.t}">
               <span class="opt-mark">${letters[i]}</span>
               <span>${o.t}</span>
             </button>`).join('')}
-        </div>`;
+        </div>
+        ${currentQi > 0 ? '<button id="btn-prev-q" class="btn btn-ghost btn-prev">← 上一题</button>' : ''}`;
       panel.querySelectorAll('.opt').forEach(btn =>
         btn.addEventListener('click', () => {
           answers[q.id] = +btn.dataset.i;
           store.bumpTotal();
-          advance(panel);
+          goNextQ();
         }));
     }
-  }
 
-  function advance(panel) {
-    panel.style.animation = 'none';
-    void panel.offsetWidth;           // 重启动画
-    panel.style.animation = '';
-    renderQuiz(true);
+    const prevBtn = panel.querySelector('#btn-prev-q');
+    if (prevBtn) prevBtn.addEventListener('click', goPrevQ);
   }
 
   /* ---------- 打分引擎 ---------- */
@@ -513,8 +520,9 @@
 
   /* ---------- 分享 ---------- */
   async function doShare() {
+    const shareUrl = location.href.split('#')[0];
     const ok = await RB_Poster.share(`${result.arc.cn} · 重启人格图鉴`,
-      `测出我是「${result.arc.cn}」，你呢？`);
+      `测出我是「${result.arc.cn}」，你是哪种重启者？快来测👉${shareUrl}`);
     toast(ok ? '链接已复制，去发朋友圈吧' : '复制失败，请手动复制地址栏链接');
   }
 
@@ -524,6 +532,7 @@
     answers = {};
     purgeDrafts();
     result = null;
+    currentQi = 0;
     go('quiz');
     renderQuiz(false);
   }
@@ -532,10 +541,12 @@
 
   /* ---------- 事件绑定 ---------- */
   $('#btn-start').addEventListener('click', () => {
-    if (currentQIndex() >= QUESTIONS.length) finish();
-    else { go('quiz'); renderQuiz(false); }
+    // 每次从封面进入都从第1题开始（answers 已由 btn-back/restart 清空）
+    currentQi = 0;
+    go('quiz');
+    renderQuiz(false);
   });
-  $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); initCover(); go('cover'); });
+  $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); currentQi = 0; initCover(); go('cover'); });
 
   $('#poster-share').addEventListener('click', doShare);
   $('#poster-download').addEventListener('click', saveImage);
