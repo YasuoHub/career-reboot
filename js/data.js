@@ -235,38 +235,38 @@ const AXES_MAX = { analytic: 7, maker: 10, creative: 10, social: 9, leader: 7, s
 
 const ARCHETYPES = {
   /* ── D1外向 × D2分析 × D3驱动 × D4守序 ── */
-  ei_at_jp_1: { num: '01', cn: '猎手型', en: 'The Hunter', slogan: '人海茫茫，你一眼锁定目标，然后直线拿下。', keywords: ['目标锁定', '直线拿下', '结果证明一切'], avatarF: '01-hunter-f.webp', avatarM: '01-hunter-m.webp', rarity: 5, colors: { accent: '#ff7a59', deep: '#6e2410', glow: 'rgba(255,122,89,.32)' } },
+  ei_at_jp_1: { num: '01', cn: '猎手', en: 'The Hunter', slogan: '人海茫茫，你一眼锁定目标，然后直线拿下。', keywords: ['目标锁定', '直线拿下', '结果证明一切'], avatarF: '01-hunter-f.webp', avatarM: '01-hunter-m.webp', rarity: 5, colors: { accent: '#ff7a59', deep: '#6e2410', glow: 'rgba(255,122,89,.32)' } },
   /* ── D1外向 × D2分析 × D3驱动 × D4灵活 ── */
-  ei_at_jp_2: { num: '02', cn: '先锋型', en: 'The Pioneer', slogan: '新市场、新赛道，别人犹豫时你已经出发了。', keywords: ['拓荒嗅觉', '快速试错', '先发制人'], avatarF: '02-pioneer-f.webp', avatarM: '02-pioneer-m.webp', rarity: 5, colors: { accent: '#ffb020', deep: '#6b430d', glow: 'rgba(255,176,32,.3)' } },
+  ei_at_jp_2: { num: '02', cn: '先锋', en: 'The Pioneer', slogan: '新市场、新赛道，别人犹豫时你已经出发了。', keywords: ['拓荒嗅觉', '快速试错', '先发制人'], avatarF: '02-pioneer-f.webp', avatarM: '02-pioneer-m.webp', rarity: 5, colors: { accent: '#ffb020', deep: '#6b430d', glow: 'rgba(255,176,32,.3)' } },
   /* ── D1外向 × D2分析 × D3支撑 × D4守序 ── */
-  ei_at_sj_1: { num: '03', cn: '守望者型', en: 'The Sentinel', slogan: '你把稳定做成品牌，客户因为你可靠而不换人。', keywords: ['客户信赖', '流程精进', '守正出奇'], avatarF: '03-sentinel-f.webp', avatarM: '03-sentinel-m.webp', rarity: 5, colors: { accent: '#63e37c', deep: '#17502b', glow: 'rgba(99,227,124,.3)' } },
+  ei_at_sj_1: { num: '03', cn: '守望者', en: 'The Sentinel', slogan: '你把稳定做成品牌，客户因为你可靠而不换人。', keywords: ['客户信赖', '流程精进', '守正出奇'], avatarF: '03-sentinel-f.webp', avatarM: '03-sentinel-m.webp', rarity: 5, colors: { accent: '#63e37c', deep: '#17502b', glow: 'rgba(99,227,124,.3)' } },
   /* ── D1外向 × D2分析 × D3支撑 × D4灵活 ── */
-  ei_at_sj_2: { num: '04', cn: '外交官型', en: 'The Diplomat', slogan: '谈判桌上你来我往，最终都笑着签了字。', keywords: ['关系润滑', '弹性应变', '和而不同'], avatarF: '04-diplomat-f.webp', avatarM: '04-diplomat-m.webp', rarity: 4, colors: { accent: '#54c5ff', deep: '#0c4a78', glow: 'rgba(84,197,255,.3)' } },
+  ei_at_sj_2: { num: '04', cn: '外交官', en: 'The Diplomat', slogan: '谈判桌上你来我往，最终都笑着签了字。', keywords: ['关系润滑', '弹性应变', '和而不同'], avatarF: '04-diplomat-f.webp', avatarM: '04-diplomat-m.webp', rarity: 4, colors: { accent: '#54c5ff', deep: '#0c4a78', glow: 'rgba(84,197,255,.3)' } },
   /* ── D1外向 × D2直觉 × D3驱动 × D4守序 ── */
-  ei_in_jp_1: { num: '05', cn: '主理人型', en: 'The Director', slogan: '审美与商业你都懂，而且管得住两头。', keywords: ['审美×商业', '品控本能', '全案操盘'], avatarF: '05-director-f.webp', avatarM: '05-director-m.webp', rarity: 5, colors: { accent: '#f06bf0', deep: '#5c1455', glow: 'rgba(240,107,240,.3)' } },
+  ei_in_jp_1: { num: '05', cn: '主理人', en: 'The Director', slogan: '审美与商业你都懂，而且管得住两头。', keywords: ['审美×商业', '品控本能', '全案操盘'], avatarF: '05-director-f.webp', avatarM: '05-director-m.webp', rarity: 5, colors: { accent: '#f06bf0', deep: '#5c1455', glow: 'rgba(240,107,240,.3)' } },
   /* ── D1外向 × D2直觉 × D3驱动 × D4灵活 ── */
-  ei_in_jp_2: { num: '06', cn: '灵感型', en: 'The Muse', slogan: '一个创意能撬动千万人，你天生就会做爆点。', keywords: ['爆款直觉', '人格魅力', '内容势能'], avatarF: '06-muse-f.webp', avatarM: '06-muse-m.webp', rarity: 4, colors: { accent: '#ff5fae', deep: '#5e1240', glow: 'rgba(255,95,174,.32)' } },
+  ei_in_jp_2: { num: '06', cn: '灵感', en: 'The Muse', slogan: '一个创意能撬动千万人，你天生就会做爆点。', keywords: ['爆款直觉', '人格魅力', '内容势能'], avatarF: '06-muse-f.webp', avatarM: '06-muse-m.webp', rarity: 4, colors: { accent: '#ff5fae', deep: '#5e1240', glow: 'rgba(255,95,174,.32)' } },
   /* ── D1外向 × D2直觉 × D3支撑 × D4守序 ── */
-  ei_in_sj_1: { num: '07', cn: '守护者型', en: 'The Guardian', slogan: '把混乱变有序，再给秩序加一点温度。', keywords: ['品质管家', '温暖守护', '秩序之美'], avatarF: '07-guardian-f.webp', avatarM: '07-guardian-m.webp', rarity: 6, colors: { accent: '#38e0c4', deep: '#0b4f45', glow: 'rgba(56,224,196,.32)' } },
+  ei_in_sj_1: { num: '07', cn: '守护者', en: 'The Guardian', slogan: '把混乱变有序，再给秩序加一点温度。', keywords: ['品质管家', '温暖守护', '秩序之美'], avatarF: '07-guardian-f.webp', avatarM: '07-guardian-m.webp', rarity: 6, colors: { accent: '#38e0c4', deep: '#0b4f45', glow: 'rgba(56,224,196,.32)' } },
   /* ── D1外向 × D2直觉 × D3支撑 × D4灵活 ── */
-  ei_in_sj_2: { num: '08', cn: '社交型', en: 'The Connector', slogan: '哪里有人的地方，哪里就有你的主场。', keywords: ['关系网罗', '气氛担当', '热闹中心'], avatarF: '08-connector-f.webp', avatarM: '08-connector-m.webp', rarity: 5, colors: { accent: '#9d7bff', deep: '#33186b', glow: 'rgba(157,123,255,.32)' } },
+  ei_in_sj_2: { num: '08', cn: '社交', en: 'The Connector', slogan: '哪里有人的地方，哪里就有你的主场。', keywords: ['关系网罗', '气氛担当', '热闹中心'], avatarF: '08-connector-f.webp', avatarM: '08-connector-m.webp', rarity: 5, colors: { accent: '#9d7bff', deep: '#33186b', glow: 'rgba(157,123,255,.32)' } },
 
   /* ── D1内向 × D2分析 × D3驱动 × D4守序 ── */
-  ii_at_jp_1: { num: '09', cn: '架构师型', en: 'The Architect', slogan: '你画的那张图，团队照着走从不迷路。', keywords: ['系统构建', '逻辑拆解', '蓝图大师'], avatarF: '09-architect-f.webp', avatarM: '09-architect-m.webp', rarity: 5, colors: { accent: '#7c6cff', deep: '#3a2e8f', glow: 'rgba(124,108,255,.35)' } },
+  ii_at_jp_1: { num: '09', cn: '架构师', en: 'The Architect', slogan: '你画的那张图，团队照着走从不迷路。', keywords: ['系统构建', '逻辑拆解', '蓝图大师'], avatarF: '09-architect-f.webp', avatarM: '09-architect-m.webp', rarity: 5, colors: { accent: '#7c6cff', deep: '#3a2e8f', glow: 'rgba(124,108,255,.35)' } },
   /* ── D1内向 × D2分析 × D3驱动 × D4灵活 ── */
-  ii_at_jp_2: { num: '10', cn: '策略型', en: 'The Strategist', slogan: '你打的每一场仗，都在开战前已经赢了八成。', keywords: ['战局预判', '资源调配', '降维打击'], avatarF: '10-strategist-f.webp', avatarM: '10-strategist-m.webp', rarity: 4, colors: { accent: '#22d3ee', deep: '#0e4a52', glow: 'rgba(34,211,238,.28)' } },
+  ii_at_jp_2: { num: '10', cn: '策略', en: 'The Strategist', slogan: '你打的每一场仗，都在开战前已经赢了八成。', keywords: ['战局预判', '资源调配', '降维打击'], avatarF: '10-strategist-f.webp', avatarM: '10-strategist-m.webp', rarity: 4, colors: { accent: '#22d3ee', deep: '#0e4a52', glow: 'rgba(34,211,238,.28)' } },
   /* ── D1内向 × D2分析 × D3支撑 × D4守序 ── */
-  ii_at_sj_1: { num: '11', cn: '精算型', en: 'The Auditor', slogan: '数字不会说谎，你恰好是最信数字的人。', keywords: ['数据严审', '合规风控', '零误差交付'], avatarF: '11-auditor-f.webp', avatarM: '11-auditor-m.webp', rarity: 5, colors: { accent: '#38e0c4', deep: '#0b4f45', glow: 'rgba(56,224,196,.32)' } },
+  ii_at_sj_1: { num: '11', cn: '精算', en: 'The Auditor', slogan: '数字不会说谎，你恰好是最信数字的人。', keywords: ['数据严审', '合规风控', '零误差交付'], avatarF: '11-auditor-f.webp', avatarM: '11-auditor-m.webp', rarity: 5, colors: { accent: '#38e0c4', deep: '#0b4f45', glow: 'rgba(56,224,196,.32)' } },
   /* ── D1内向 × D2分析 × D3支撑 × D4灵活 ── */
-  ii_at_sj_2: { num: '12', cn: '解题型', en: 'The Analyst', slogan: '乱麻到你手里，三分钟出答案。', keywords: ['结构化思维', '数据敏感', '逻辑闭环'], avatarF: '12-analyst-f.webp', avatarM: '12-analyst-m.webp', rarity: 6, colors: { accent: '#7dd3fc', deep: '#1e3a5f', glow: 'rgba(125,211,252,.3)' } },
+  ii_at_sj_2: { num: '12', cn: '解题', en: 'The Analyst', slogan: '乱麻到你手里，三分钟出答案。', keywords: ['结构化思维', '数据敏感', '逻辑闭环'], avatarF: '12-analyst-f.webp', avatarM: '12-analyst-m.webp', rarity: 6, colors: { accent: '#7dd3fc', deep: '#1e3a5f', glow: 'rgba(125,211,252,.3)' } },
   /* ── D1内向 × D2直觉 × D3驱动 × D4守序 ── */
-  ii_in_jp_1: { num: '13', cn: '工程师型', en: 'The Engineer', slogan: '既要造得出，又要造得美，缺一不可。', keywords: ['手上功夫', '工程直觉', '精密制造'], avatarF: '13-engineer-f.webp', avatarM: '13-engineer-m.webp', rarity: 5, colors: { accent: '#ffb020', deep: '#6b430d', glow: 'rgba(255,176,32,.3)' } },
+  ii_in_jp_1: { num: '13', cn: '工程师', en: 'The Engineer', slogan: '既要造得出，又要造得美，缺一不可。', keywords: ['手上功夫', '工程直觉', '精密制造'], avatarF: '13-engineer-f.webp', avatarM: '13-engineer-m.webp', rarity: 5, colors: { accent: '#ffb020', deep: '#6b430d', glow: 'rgba(255,176,32,.3)' } },
   /* ── D1内向 × D2直觉 × D3驱动 × D4灵活 ── */
-  ii_in_jp_2: { num: '14', cn: '艺术家型', en: 'The Artist', slogan: '世界是素材，你是执笔人。', keywords: ['审美在线', '内容直觉', '表达欲'], avatarF: '14-artist-f.webp', avatarM: '14-artist-m.webp', rarity: 5, colors: { accent: '#f06bf0', deep: '#5c1455', glow: 'rgba(240,107,240,.3)' } },
+  ii_in_jp_2: { num: '14', cn: '艺术家', en: 'The Artist', slogan: '世界是素材，你是执笔人。', keywords: ['审美在线', '内容直觉', '表达欲'], avatarF: '14-artist-f.webp', avatarM: '14-artist-m.webp', rarity: 5, colors: { accent: '#f06bf0', deep: '#5c1455', glow: 'rgba(240,107,240,.3)' } },
   /* ── D1内向 × D2直觉 × D3支撑 × D4守序 ── */
-  ii_in_sj_1: { num: '15', cn: '手艺型', en: 'The Craftsman', slogan: '别人看到的是产品，你看到的是每一道工序。', keywords: ['匠心手感', '质量信仰', '日拱一卒'], avatarF: '15-craftsman-f.webp', avatarM: '15-craftsman-m.webp', rarity: 6, colors: { accent: '#63e37c', deep: '#17502b', glow: 'rgba(99,227,124,.3)' } },
+  ii_in_sj_1: { num: '15', cn: '手艺', en: 'The Craftsman', slogan: '别人看到的是产品，你看到的是每一道工序。', keywords: ['匠心手感', '质量信仰', '日拱一卒'], avatarF: '15-craftsman-f.webp', avatarM: '15-craftsman-m.webp', rarity: 6, colors: { accent: '#63e37c', deep: '#17502b', glow: 'rgba(99,227,124,.3)' } },
   /* ── D1内向 × D2直觉 × D3支撑 × D4灵活 ── */
-  ii_in_sj_2: { num: '16', cn: '探索者型', en: 'The Explorer', slogan: '什么都想弄明白，什么都想亲手试试。', keywords: ['好奇驱动', '自学科幻', '体验至上'], avatarF: '16-explorer-f.webp', avatarM: '16-explorer-m.webp', rarity: 5, colors: { accent: '#a78bfa', deep: '#2e1065', glow: 'rgba(167,139,250,.3)' } },
+  ii_in_sj_2: { num: '16', cn: '探索者', en: 'The Explorer', slogan: '什么都想弄明白，什么都想亲手试试。', keywords: ['好奇驱动', '自学科幻', '体验至上'], avatarF: '16-explorer-f.webp', avatarM: '16-explorer-m.webp', rarity: 5, colors: { accent: '#a78bfa', deep: '#2e1065', glow: 'rgba(167,139,250,.3)' } },
 };
 
 /* 四组二值判别常量（由六维归一化分值推得） */
