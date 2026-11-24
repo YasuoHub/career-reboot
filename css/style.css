@@ -381,6 +381,59 @@ img { display: block; max-width: 100%; }
 .res-ctas .btn { flex: 1; }
 .res-legal { font-size: 11px; color: #6f6c86; line-height: 1.75; text-align: center; }
 
+/* ---------------- v2 扩展：多选 / 适配度 / 徽章 ---------------- */
+.multi-opts {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.opt.opt-chip { padding: 14px 14px; font-size: 14px; }
+.opt-chip .opt-mark {
+  width: 22px; height: 22px; border-radius: 7px;
+  border: 1px solid var(--line);
+  transition: all .22s;
+}
+.opt.opt-chip.sel {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.opt.opt-chip.sel .opt-mark {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.confirm-row { margin-top: 18px; }
+.confirm-row .btn { width: 100%; }
+
+.fit-total { font-size: 13px; color: var(--ink-dim); text-align: center; margin-top: 12px; }
+.fit-total b { font-size: 20px; color: var(--accent); }
+
+.career-fit {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 12.5px; color: var(--ink-dim); margin-bottom: 9px;
+}
+.career-fit b { font-size: 16px; color: var(--accent); }
+.dim-dots { letter-spacing: 2px; font-size: 9px; color: var(--accent); opacity: .8; }
+
+.badge-official {
+  font-style: normal; font-size: 10px; letter-spacing: .05em;
+  border-radius: 6px; padding: 2px 7px; margin-left: 8px;
+  vertical-align: middle;
+}
+.badge-official.s { color: #ffd166; border: 1px solid #ffd16655; background: #ffd56614; }
+.badge-official.l { color: #63e37c; border: 1px solid #63e37c55; background: #63e37c14; }
+
+.relaxed-note {
+  font-size: 12.5px; color: var(--ink-dim);
+  border: 1px dashed var(--line);
+  border-radius: 14px; padding: 10px 14px; margin-bottom: 14px;
+}
+.relaxed-note b { color: var(--ink); }
+
+.career-gap {
+  font-size: 12.5px; color: var(--ink-dim);
+  margin: 8px 0 10px;
+}
+.career-gap b { color: var(--ink); }
+.career-gap.done { color: var(--accent); }
+
 /* ---------------- 弹窗 / Toast ---------------- */
 .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; }
 .modal.hidden { display: none; }
