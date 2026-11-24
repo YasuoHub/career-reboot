@@ -203,6 +203,17 @@ const QUESTIONS = [
       { t: '哪儿都行，看机会', add: { cityTier: '不限' } },
     ],
   },
+  /* ---- q16 性别：写入 profile.gender，用于匹配角色头像男女双版 ---- */
+  {
+    id: 'q16',
+    tag: '来路',
+    text: '最后给自己贴个标签，你认可是——',
+    opts: [
+      { t: '男', add: { gender: '男' } },
+      { t: '女', add: { gender: '女' } },
+      { t: '非二元 / 其他', add: { gender: '其他' } },
+    ],
+  },
 ];
 
 const AXES = [
