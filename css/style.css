@@ -24,7 +24,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 
 body {
   font-family: var(--font-body);
@@ -70,23 +70,26 @@ img { display: block; max-width: 100%; }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ---------------- 屏幕切换 ---------------- */
-#app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; min-height: 100vh; }
+/* ---------------- 屏幕切换 ----------------
+   文档流布局：display 切换 + 进入动画。
+   不使用绝对定位内部滚动——旧内核/微信 WebView 对
+   absolute+inset 滚动容器支持差，且 100vh 随地址栏伸缩时
+   会裁剪内容，导致底部按钮不可达。页面级原生滚动最稳。 */
+#app { position: relative; z-index: 1; }
 
 .screen {
-  position: absolute; inset: 0;
+  display: none;
   max-width: 520px; margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 34px 24px calc(28px + env(safe-area-inset-bottom));
-  overflow-y: auto; overscroll-behavior: contain;
-  opacity: 0; visibility: hidden; transform: translateY(18px) scale(.985);
-  transition: opacity .45s cubic-bezier(.22, 1, .36, 1),
-              transform .45s cubic-bezier(.22, 1, .36, 1),
-              visibility 0s linear .45s;
 }
 .screen.active {
-  opacity: 1; visibility: visible; transform: none;
-  transition-delay: 0s, 0s, 0s;
+  display: block;
+  animation: scr-in .45s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes scr-in {
+  from { opacity: 0; transform: translateY(16px); }
 }
 
 /* ---------------- 按钮 ---------------- */
@@ -131,11 +134,13 @@ img { display: block; max-width: 100%; }
 .icon-btn:hover { color: var(--ink); transform: translateX(-2px); }
 
 /* ---------------- 封面 ---------------- */
-#sc-cover {
+#sc-cover.active {
   display: flex; flex-direction: column; justify-content: center;
-  text-align: left;
-  gap: 22px;
+  text-align: left; gap: 22px;
   padding-top: 56px; padding-bottom: 48px;
+}
+@supports (justify-content: safe center) {
+  #sc-cover.active { justify-content: safe center; }
 }
 .cover-kicker {
   font-size: 13px; letter-spacing: .28em; color: var(--ink-dim);
@@ -171,6 +176,12 @@ img { display: block; max-width: 100%; }
 .quiz-top {
   display: flex; align-items: center; gap: 14px;
   margin-bottom: 30px;
+}
+#sc-quiz.active {
+  display: flex; flex-direction: column; justify-content: center;
+}
+@supports (justify-content: safe center) {
+  #sc-quiz.active { justify-content: safe center; }
 }
 .dots { list-style: none; display: flex; gap: 7px; flex: 1; }
 .dots li {
@@ -227,7 +238,9 @@ img { display: block; max-width: 100%; }
 .opt:active { transform: scale(.98); }
 
 /* ---------------- 分析屏 ---------------- */
-#sc-computing { display: grid; place-items: center; text-align: center; }
+#sc-computing.active {
+  display: grid; place-items: center; text-align: center;
+}
 .computing-box { display: flex; flex-direction: column; align-items: center; gap: 34px; }
 .ring {
   width: 96px; height: 96px; border-radius: 50%;
