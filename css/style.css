@@ -417,6 +417,7 @@ img { display: block; max-width: 100%; }
 
 .fit-total { font-size: 13px; color: var(--ink-dim); text-align: center; margin-top: 12px; }
 .fit-total b { font-size: 20px; color: var(--accent); }
+.fit-note { font-size: 11px; color: #6f6c86; text-align: center; margin-top: 9px; line-height: 1.6; }
 
 .career-fit {
   display: flex; align-items: baseline; gap: 8px;
@@ -448,17 +449,23 @@ img { display: block; max-width: 100%; }
 .career-gap.done { color: var(--accent); }
 
 /* ---------------- 弹窗 / Toast ---------------- */
-.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; }
+html.lock, body.lock { overflow: hidden; }
+
+.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px;
+  overscroll-behavior: contain; } /* 防止内部滚动串到底层页面 */
 .modal.hidden { display: none; }
 .modal-mask { position: absolute; inset: 0; background: rgba(5, 5, 10, .78); backdrop-filter: blur(8px); }
 .modal-card {
   position: relative; width: min(88vw, 380px);
-  display: flex; flex-direction: column; gap: 14px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 13px;
   animation: pop .4s cubic-bezier(.34, 1.56, .64, 1) both;
 }
 @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 #poster-img {
-  width: 100%; border-radius: 20px;
+  width: 100%; max-height: 52dvh; object-fit: contain;
+  border-radius: 20px;
   box-shadow: 0 24px 70px -18px #000, 0 0 0 1px rgba(255, 255, 255, .08);
 }
 .modal-hint { font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.6; }
