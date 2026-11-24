@@ -146,7 +146,7 @@
     const dims = {}, profile = {
       modes: [], risk: 0, floor: 0, hours: 1,
       ageBand: 2, eduRank: 2, industry: '其他', health: 2,
-      skills: [], pref: '坐班', cityTier: '不限',
+      skills: [], pref: '坐班', cityTier: '不限', gender: '',
     };
     QUESTIONS.forEach(q => {
       if (q.multi) { (answers[q.id] || []).forEach(i => { const o = q.opts[i]; if (o && o.add && o.add.sk && !profile.skills.includes(o.add.sk)) profile.skills.push(o.add.sk); }); return; }
@@ -163,6 +163,7 @@
         if (typeof o.add.health === 'number') profile.health = o.add.health;
         if (o.add.pref) profile.pref = o.add.pref;
         if (o.add.cityTier) profile.cityTier = o.add.cityTier;
+        if (o.add.gender) profile.gender = o.add.gender;
       }
     });
 
