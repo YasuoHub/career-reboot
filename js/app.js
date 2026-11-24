@@ -289,6 +289,9 @@
             <div class="career-top">
               <span class="career-rank">${c.rank}</span>
               <span class="career-name">${c.name}${c.S ? '<i class="badge-official s">国家新职业</i>' : ''}${c.L ? '<i class="badge-official l">绿色职业</i>' : ''}</span>
+            </div>
+            <div class="career-meta">
+              <div class="tags">${(c.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}</div>
               <span class="career-sal">${c.sal}/月</span>
             </div>
             <p class="career-fit">适配度 <b>${c.scoreNum}</b><span class="dim-dots">${'●'.repeat(Math.round(c.scoreNum / 20))}${'○'.repeat(5 - Math.round(c.scoreNum / 20))}</span></p>
