@@ -1,0 +1,24 @@
+js/data.js
+  s_62672facbf17c2::t_af9197d51adc16 146,211-214
+  s_62672facbf17c2::t_2b1ad1b7ed8065 118
+  s_62672facbf17c2::t_f630a5e672466a 132,199-202
+  s_62672facbf17c2::t_15ddfc0e8acd16 139,205-208
+  s_62672facbf17c2::t_0ed16ab5b9e648 153,217-220
+  s_62672facbf17c2::t_0642b27c7aa55e 187-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "e34af3b7c099a4b46da40c266d260e13cb295a17",
+  "prompts": {},
+  "sessions": {
+    "s_62672facbf17c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3846b109-1323-4c9d-bb7a-546d577a3bd5",
+        "model": "xing4.1-flash-preview"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
