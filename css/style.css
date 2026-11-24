@@ -302,7 +302,7 @@ img { display: block; max-width: 100%; }
 }
 .arc-avatar {
   display: block;
-  width: 163px; height: 203px;   /* 4:5 · 原 195×244 ÷1.2 */
+  width: 147px; height: 184px;   /* 4:5 · 原 163×203 ×0.9 */
   border-radius: 20px;
   flex: none;
   box-shadow: 0 18px 64px var(--glow), 0 0 0 1px rgba(255, 255, 255, .08);
