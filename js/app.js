@@ -34,6 +34,8 @@
     bumpTotal() { localStorage.setItem('rb_total', String(this.total + 1)); },
     saveLast(r) { localStorage.setItem('rb_last', JSON.stringify(r)); },
     getLast() { try { return JSON.parse(localStorage.getItem('rb_last')); } catch (_) { return null; } },
+    /* v3 清理：旧版原型键名不再兼容，强制清空防 undefined */
+    purgeLegacy() { localStorage.removeItem('rb_last'); },
   };
   let answers = {}, result = null;
   const multiDraft = {};
@@ -53,7 +55,7 @@
   function initCover() {
     $('#stat-total').textContent = store.total.toLocaleString('zh-CN');
     const last = store.getLast(), lastEl = $('#cover-last');
-    if (last && ARCHETYPES[last.archetype]) { lastEl.hidden = false; $('#cover-last-name').textContent = ARCHETYPES[last.archetype].cn; }
+    if (last && ARCHETYPES[last.archetype]) { lastEl.hidden = false; $('#cover-last-name').textContent = ARCHETYPES[last.archetype].cn; } else { lastEl.hidden = true; }
   }
 
   /* ---------- 答题 ---------- */
