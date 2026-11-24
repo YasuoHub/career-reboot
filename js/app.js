@@ -12,6 +12,20 @@
     mode_blur: '心动未动 · 小步试错',
   };
 
+  /* ---------- 首屏 Loading（三重移除，防卡死） ---------- */
+  let loaderDone = false;
+  function hideLoader() {
+    if (loaderDone) return;
+    loaderDone = true;
+    const l = document.getElementById('loader');
+    if (!l) return;
+    l.classList.add('done');
+    setTimeout(() => l.remove(), 500);
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(hideLoader, 650));
+  window.addEventListener('load', () => setTimeout(hideLoader, 200));
+  setTimeout(hideLoader, 4000); // 兜底：任何脚本异常也不许卡在加载层
+
   const screens = {
     cover: $('#sc-cover'),
     quiz: $('#sc-quiz'),
@@ -136,6 +150,7 @@
     const ranked = [...AXES].sort((a, b) => norm[b.key] - norm[a.key]);
     const top = ranked[0].key, second = ranked[1].key;
     let archetypeId = top;
+    if (!ARCHETYPES[archetypeId]) archetypeId = 'stable'; // 防御：键名事故时兜底，避免白屏
     for (const [id, arc] of Object.entries(ARCHETYPES)) {
       if (arc.combo && arc.combo.includes(top) && arc.combo.includes(second)
         && norm[second] >= norm[top] * 0.55) {
@@ -187,6 +202,12 @@
   let computingTimer;
   function finish() {
     result = score();
+    if (!result || !result.arc) {
+      console.error(new Error('SCORING_RESULT_EMPTY'));
+      toast('分析出了点状况，返回重来一次吧');
+      go('cover');
+      return;
+    }
     go('computing');
     const lines = [
       ['正在读取你的作答指纹<b>…</b>', 0],
@@ -210,6 +231,11 @@
 
   /* ---------- 结果页 ---------- */
   function renderResult() {
+    if (!result || !result.arc) {
+      go('cover');
+      toast('结果没接住，请重测一次');
+      return;
+    }
     const r = result;
     const arc = r.arc;
     const colors = arc.colors;
@@ -301,6 +327,7 @@
 
   /* ---------- 重测 ---------- */
   function restart() {
+    clearTimeout(computingTimer);
     answers = {};
     result = null;
     go('quiz');
