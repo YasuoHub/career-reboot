@@ -966,3 +966,29 @@ html.lock, body.lock { overflow: hidden; }
 }
 /* 完整报告长图：弹窗内可滚动查看，不压缩成一条 */
 #poster-modal.mode-report #poster-img { max-height: none; }
+
+/* 移动端性能：关闭高开销的模糊与玻璃效果，避免快速滚动黑屏 */
+@media (max-width: 768px) {
+  .bg-blob {
+    filter: none;
+    animation: none;
+    will-change: auto;
+  }
+  .bg-grain { display: none; }
+  .panel,
+  .btn-ghost,
+  .icon-btn,
+  .opt,
+  .rarity-chip,
+  .career-card,
+  .unlock-card,
+  .unlock-overlay,
+  .modal-mask {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .report-teaser.is-collapsed::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

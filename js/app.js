@@ -302,7 +302,19 @@
         const lo = Math.min(...scored.map(x => x.fb[k])), hi = Math.max(...scored.map(x => x.fb[k]));
         c.fb[k] = hi === lo ? 75 : Math.round(55 + 40 * ((v - lo) / (hi - lo)));
       });
-      c.scoreNum = Math.round(c.fb['技能重合'] * .30 + c.fb['行业迁移'] * .20 + c.fb['性格延续'] * .15 + c.fb['市场时机'] * .20 + c.fb['投入可行'] * .15);
+    });
+
+    // 展示分：统一映射到 80+ 区间，并按名次拉开差异（前三档不重叠）
+    const raws = scored.map(c => c._rawScore);
+    const rawHi = Math.max(...raws), rawLo = Math.min(...raws);
+    const baseByRank = [96, 90, 85];
+    scored.forEach((c, i) => {
+      const spread = rawHi === rawLo
+        ? 1 - Math.min(1, i / Math.max(1, scored.length - 1))
+        : (c._rawScore - rawLo) / (rawHi - rawLo);
+      const base = baseByRank[i] ?? 82;
+      const adj = Math.round((spread - 0.5) * 4);
+      c.scoreNum = Math.max(80, Math.min(98, base + adj));
     });
     scored.slice(0, 3).forEach((c, i) => (c.rank = '#' + (i + 1)));
 
@@ -873,6 +885,30 @@
       })));
   }
 
+  async function inlineImages(node) {
+    const restores = [];
+    for (const img of node.querySelectorAll('img')) {
+      const src = img.getAttribute('src') || '';
+      if (!src || src.startsWith('data:')) continue;
+      try {
+        const res = await fetch(src, { credentials: 'same-origin' });
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const dataUrl = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+        if (!dataUrl) continue;
+        restores.push([img, src]);
+        img.src = dataUrl;
+        try { await img.decode(); } catch (_) {}
+      } catch (_) { /* 保留原图，交给库处理 */ }
+    }
+    return () => restores.forEach(([img, src]) => { img.src = src; });
+  }
+
   async function saveReportCard() {
     if (!result) return;
     const btn = $('#report-card-save');
@@ -880,6 +916,7 @@
     if (btn) { btn.disabled = true; btn.textContent = '正在生成…'; }
     showBusy('正在生成完整报告图片… 包含摘要、六维、TOP3 与 12 周路线');
     let hideEls = [], prevDisplay = [];
+    let restoreImgs = null, avatarEl = null, avatarPrev = null, skelEl = null, skelDisplay = '';
     try {
       const node = $('#report-body');
       if (!node) throw new Error('报告节点缺失');
@@ -887,19 +924,30 @@
       hideEls = [node.querySelector('#report-card-save'), node.querySelector('.rep-kit-foot')].filter(Boolean);
       prevDisplay = hideEls.map(el => el.style.display);
       hideEls.forEach(el => { el.style.display = 'none'; });
-      const avatar = node.querySelector('.rep-avatar');
-      if (avatar) {
+
+      avatarEl = node.querySelector('.rep-avatar');
+      skelEl = node.querySelector('.rep-avatar-skel');
+      if (skelEl) { skelDisplay = skelEl.style.display; skelEl.style.display = 'none'; }
+      if (avatarEl) {
+        avatarPrev = { transition: avatarEl.style.transition, opacity: avatarEl.style.opacity };
+        // 截图时强制不透明，避免过渡未完成被截成黑色占位
+        avatarEl.style.transition = 'none';
+        avatarEl.style.opacity = '1';
         try {
-          if (!avatar.complete) await new Promise(resolve => {
-            avatar.addEventListener('load', resolve, { once: true });
-            avatar.addEventListener('error', resolve, { once: true });
+          if (!avatarEl.complete) await new Promise(resolve => {
+            avatarEl.addEventListener('load', resolve, { once: true });
+            avatarEl.addEventListener('error', resolve, { once: true });
             setTimeout(resolve, 3000);
           });
-          if (avatar.parentElement) avatar.parentElement.classList.add('loaded');
+          if (avatarEl.parentElement) avatarEl.parentElement.classList.add('loaded');
         } catch (_) { /* 忽略头像异常，继续生成 */ }
       }
+
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
       await waitImages(node);
+      // 把头像等图片转成 dataURL，避免截图库跨域/缓存问题导致占位
+      restoreImgs = await inlineImages(node);
+      await new Promise(resolve => setTimeout(resolve, 60));
       if (!window.htmlToImage) throw new Error('html-to-image 未加载');
 
       const w = Math.max(320, node.scrollWidth);
@@ -932,6 +980,14 @@
         toast('图片生成失败，请重试');
       }
     } finally {
+      try { if (restoreImgs) restoreImgs(); } catch (_) {}
+      try {
+        if (avatarEl && avatarPrev) {
+          avatarEl.style.transition = avatarPrev.transition;
+          avatarEl.style.opacity = avatarPrev.opacity;
+        }
+        if (skelEl) skelEl.style.display = skelDisplay;
+      } catch (_) {}
       try { hideEls.forEach((el, i) => { el.style.display = prevDisplay[i] || ''; }); } catch (_) {}
       hideBusy();
       if (btn) { btn.disabled = false; btn.textContent = label; }
