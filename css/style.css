@@ -168,6 +168,7 @@ img { display: block; max-width: 100%; }
 .cover-last b { color: var(--accent); }
 .cover-last.clickable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; }
 .cover-legal { font-size: 11.5px; color: #6f6c86; line-height: 1.75; }
+.cover-legal a, .res-legal a, .rep-legal a { color: #8a87a6; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------------- 答题屏 ---------------- */
 .quiz-top {
@@ -552,6 +553,27 @@ img { display: block; max-width: 100%; }
 
 .res-legal { font-size: 11px; color: #6f6c86; line-height: 1.75; text-align: center; }
 
+/* 邀请裂变卡片 */
+.invite-card {
+  margin: 18px 0 16px; padding: 18px 18px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--line);
+}
+.invite-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.invite-head span { font-size: 11px; letter-spacing: .22em; color: var(--accent); font-weight: 800; }
+.invite-head em { font-style: normal; font-size: 9.5px; letter-spacing: .18em; color: #6f6c86; }
+.invite-copy { font-size: 13px; line-height: 1.7; color: var(--ink-dim); margin-bottom: 12px; }
+.invite-copy b { color: var(--accent); font-weight: 900; }
+.invite-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.invite-bar i {
+  display: block; width: 0; height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--deep));
+  transition: width .5s cubic-bezier(.22, 1, .36, 1);
+}
+.invite-progress { font-size: 11.5px; color: #7a7795; margin-top: 8px; }
+.invite-btn { width: 100%; margin-top: 12px; }
+
 /* ---------------- v2 扩展：多选 / 适配度 / 徽章 ---------------- */
 .multi-opts {
   display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
@@ -701,6 +723,8 @@ html.lock, body.lock { overflow: hidden; }
 .unlock-card p { color: #a9a6c2; font-size: 13px; line-height: 1.7; margin: 0 0 18px; }
 .unlock-card .btn { margin: 0 6px; }
 .unlock-tip { margin-top: 14px !important; color: #7a7795 !important; font-size: 12px !important; }
+.unlock-legal { margin-top: 6px !important; color: #6f6c86 !important; font-size: 11px !important; }
+.unlock-legal a { color: #8a87a6; }
 .unlock-kicker {
   font-size: 10px !important; letter-spacing: .24em; color: var(--accent) !important;
   margin-bottom: 8px !important; font-weight: 800;
@@ -760,6 +784,14 @@ html.lock, body.lock { overflow: hidden; }
 .rep-meta { margin-top: 18px; font-size: 11.5px; color: #6f6c86; letter-spacing: .03em; }
 
 .rep-sec { padding: 30px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.rep-ai-text {
+  font-size: 14.5px; line-height: 1.95; color: var(--ink);
+  padding: 16px 18px; border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+}
+.rep-ai-note { font-size: 11px; color: #6f6c86; margin-top: 9px; }
+.rep-card-btn { display: block; width: 100%; margin-top: 14px; }
 .rep-sec-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
 .rep-sec-h span { font-size: 11px; letter-spacing: .2em; color: var(--accent); }
 .rep-sec-h h2 { font-size: 21px; font-weight: 900; letter-spacing: .03em; }
@@ -782,6 +814,22 @@ html.lock, body.lock { overflow: hidden; }
 .rep-bar i { display: block; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .rep-bar i b { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--deep)); }
 .rep-bar em { font-style: normal; text-align: right; color: var(--accent); font-weight: 700; }
+
+/* 同型人物案例 */
+.rep-case-note { font-size: 11.5px; color: #6f6c86; margin: -2px 0 12px; line-height: 1.7; }
+.rep-cases { display: grid; gap: 12px; }
+.rep-case {
+  padding: 16px 16px 14px; border-radius: 14px;
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid rgba(255, 255, 255, .07);
+}
+.rep-case-who { font-size: 11.5px; color: var(--accent); font-weight: 700; letter-spacing: .02em; margin-bottom: 7px; }
+.rep-case-path { font-size: 13.5px; line-height: 1.75; color: #e5e2f4; margin-bottom: 7px; }
+.rep-case-note-in { font-size: 12.5px; line-height: 1.75; color: var(--ink-dim); margin-bottom: 9px; }
+.rep-case blockquote {
+  margin: 0; padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  font-size: 12.5px; line-height: 1.7; color: #b9b5d0;
+}
 
 .rep-idcard { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .rep-idcard span {

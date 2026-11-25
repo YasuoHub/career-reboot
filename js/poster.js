@@ -352,6 +352,138 @@ const RB_Poster = (() => {
     return url;
   }
 
+  /* ---------- 深度报告分享卡（3:4，可保存/转发） ---------- */
+  async function buildReportCard(result, summary) {
+    const W = 750, H = 1000;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const { ARCHETYPES, AXES } = window.RB_DATA;
+    const arc = ARCHETYPES[result.archetype] || ARCHETYPES['ii_at_sj_2'];
+    const colors = arc.colors;
+    const norm = result.norm || {};
+
+    // 底与光斑
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#12101f');
+    bg.addColorStop(.55, colors.deep);
+    bg.addColorStop(1, '#070610');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W * .86, 110, 20, W * .86, 110, 360);
+    glow.addColorStop(0, colors.glow); glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, 520);
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5;
+    rr(ctx, 24, 24, W - 48, H - 48, 40); ctx.stroke();
+
+    const ink = '#f5f3ff', dim = 'rgba(245,243,255,.62)', faint = 'rgba(245,243,255,.42)';
+
+    // 顶栏 + 二维码
+    ctx.textAlign = 'left';
+    ctx.font = `700 19px ${FS}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText('DEEP REPORT · 重启人格图鉴', 56, 86);
+    ctx.font = `400 17px ${FS}`;
+    ctx.fillStyle = faint;
+    ctx.fillText(`图鉴 №${arc.num} · 仅占 ${arc.rarity}%`, 56, 116);
+
+    const qr = await loadQR(
+      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(location.href.split('#')[0]),
+      200
+    );
+    const qs = 96, qx = W - 56 - qs, qy = 58;
+    if (qr) {
+      ctx.save(); rr(ctx, qx, qy, qs, qs, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+      ctx.drawImage(qr, qx + 7, qy + 7, qs - 14, qs - 14);
+    } else {
+      rr(ctx, qx, qy, qs, qs, 12); ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.stroke();
+    }
+
+    // 类型
+    ctx.font = `400 104px ${FD}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(arc.cn, 52, 222);
+    ctx.font = `700 21px ${FS}`;
+    ctx.fillStyle = dim;
+    ctx.fillText(arc.en.split('').join('\u200a'), 58, 258);
+    ctx.font = `400 25px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.78)';
+    const sl = wrap(ctx, arc.slogan, W - 128);
+    sl.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, 56, 304 + i * 34));
+
+    // 关键词
+    ctx.font = `700 18px ${FS}`;
+    let kx = 56, ky = 380;
+    arc.keywords.slice(0, 3).forEach(kw => {
+      const w = ctx.measureText(kw).width + 34;
+      if (kx + w > W - 56) return;
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; rr(ctx, kx, ky, w, 38, 19); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.84)'; ctx.textBaseline = 'middle';
+      ctx.fillText(kw, kx + 17, ky + 20);
+      kx += w + 10;
+    });
+    ctx.textBaseline = 'alphabetic';
+
+    // 六维
+    ctx.font = `900 21px ${FS}`;
+    ctx.fillStyle = ink;
+    ctx.fillText('六维画像', 56, 468);
+    let by = 492;
+    AXES.forEach(a => {
+      const v = Math.max(0, Math.min(100, Math.round(norm[a.key] || 0)));
+      ctx.font = `400 16px ${FS}`;
+      ctx.fillStyle = dim;
+      ctx.fillText(a.label, 56, by + 4);
+      const tx = 112, tw = W - 56 - tx - 46;
+      ctx.fillStyle = 'rgba(255,255,255,.08)'; rr(ctx, tx, by - 6, tw, 12, 6); ctx.fill();
+      ctx.fillStyle = colors.accent; rr(ctx, tx, by - 6, Math.max(6, tw * v / 100), 12, 6); ctx.fill();
+      ctx.font = `700 15px ${FS}`;
+      ctx.fillStyle = colors.accent;
+      ctx.textAlign = 'right';
+      ctx.fillText(String(v), W - 56, by + 5);
+      ctx.textAlign = 'left';
+      by += 48;
+    });
+
+    // 摘要
+    const txt = String(summary || arc.slogan || '').replace(/\s+/g, ' ');
+    ctx.font = `400 22px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.76)';
+    const lines = wrap(ctx, txt, W - 112);
+    let sy = 806;
+    lines.slice(0, 3).forEach((ln, i) => {
+      const clipped = (i === 2 && lines.length > 3) ? ln.slice(0, Math.max(0, ln.length - 1)) + '…' : ln;
+      ctx.fillText(clipped, 56, sy + i * 32);
+    });
+
+    // 首选方向
+    const top1 = (result.top3 || [])[0];
+    if (top1) {
+      ctx.fillStyle = 'rgba(255,255,255,.055)';
+      rr(ctx, 56, 900, W - 112, 58, 16); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; rr(ctx, 56, 900, W - 112, 58, 16); ctx.stroke();
+      ctx.font = `700 15px ${FS}`;
+      ctx.fillStyle = faint;
+      ctx.fillText('首选方向', 76, 924);
+      ctx.font = `900 21px ${FS}`;
+      ctx.fillStyle = ink;
+      const nm = wrap(ctx, top1.name, W - 260)[0] || top1.name;
+      ctx.fillText(nm, 76, 950);
+      ctx.font = `700 16px ${FS}`;
+      ctx.fillStyle = colors.accent;
+      ctx.textAlign = 'right';
+      ctx.fillText(top1.sal + '/月', W - 76, 950);
+      ctx.textAlign = 'left';
+    }
+
+    // 页脚
+    ctx.font = `400 14px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.34)';
+    ctx.fillText('16 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 56, 984);
+
+    return cv.toDataURL('image/png');
+  }
+
   /* ---------- 分享动作 ---------- */
   async function share(title, text) {
     try {
@@ -366,5 +498,5 @@ const RB_Poster = (() => {
     } catch (_) { return false; }
   }
 
-  return { drawRadar, confetti, buildShare, share, loadQR, loadImg };
+  return { drawRadar, confetti, buildShare, buildReportCard, share, loadQR, loadImg };
 })();

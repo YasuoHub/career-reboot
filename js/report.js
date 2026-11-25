@@ -6,7 +6,7 @@
         不虚构真实人物案例，不承诺就业结果。
    ============================================================ */
 (() => {
-  const { AXES, SKILLS, AGE_BANDS, EDU_RANK_LABEL } = window.RB_DATA;
+  const { AXES, SKILLS, AGE_BANDS, EDU_RANK_LABEL, CASE_STORIES } = window.RB_DATA;
 
   const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESC_MAP[c]);
@@ -16,6 +16,18 @@
   function fmtDate(ts) {
     const d = new Date(Number(ts) || Date.now());
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  /* 本地摘要：AI 服务不可用时的兜底文案 */
+  function localSummary(r) {
+    if (!r || !r.arc) return '';
+    const arc = r.arc, p = r.profile || {}, norm = r.norm || {};
+    const maxAxis = AXES.reduce((a, b) => ((norm[a.key] || 0) >= (norm[b.key] || 0) ? a : b), AXES[0]);
+    const top1 = (r.top3 || [])[0] || {};
+    const pace = p.hours === 0 ? '全职冲刺' : p.hours === 1 ? '每周 5–15 小时' : '每周 2–5 小时';
+    return `你是「${arc.cn}」：${arc.slogan} 你的「${maxAxis.label}」最突出，这让你在需要这种能力的场景里更省力。`
+      + `当前最值得先验证的方向是「${top1.name || '你选的第一方向'}」；按 ${pace} 的节奏，先用 1 周做一次最低成本的小验证，`
+      + `再决定要不要把时间押进去。`;
   }
 
   /* ---------------- 六维解读（高/中/低三档） ---------------- */
@@ -182,6 +194,18 @@
           }).join('')}
         </div>
 
+        <h4 class="rep-h4">同型的人，怎么走过这段路</h4>
+        <p class="rep-case-note">以下为示意性虚构场景（非真实人物访谈），用来看见几种可能路径，不是标准答案。</p>
+        <div class="rep-cases">
+          ${(CASE_STORIES[r.archetype] || []).map(cs => `
+            <div class="rep-case">
+              <p class="rep-case-who">${esc(cs.who)}</p>
+              <p class="rep-case-path">${esc(cs.path)}</p>
+              <p class="rep-case-note-in">${esc(cs.note)}</p>
+              <blockquote>「${esc(cs.quote)}」</blockquote>
+            </div>`).join('')}
+        </div>
+
         <div class="rep-idcard">
           <span>${esc(ageText || '年龄未填')}</span>
           <span>${esc(eduText || '学历未填')}</span>
@@ -271,11 +295,13 @@
             <span>${esc(hoursText)}</span>
             <span>适配首选：${esc(top1.name || '—')}</span>
           </div>
-          <p class="rep-kit-foot">截图保存，或回到结果页生成分享海报。</p>
+          <p class="rep-kit-foot">保存报告卡，或回到结果页生成分享海报。</p>
+          <button class="btn btn-primary rep-card-btn" id="report-card-save" type="button">保存报告卡</button>
         </div>
         <p class="rep-legal">
-          本报告基于你在 ${esc(fmtDate(r.ts))} 的本地作答生成，未上传任何服务器；不含真实人物案例，不构成医疗、心理诊断或就业承诺。
+          本报告基于你在 ${esc(fmtDate(r.ts))} 的本地作答生成；同型人物案例为示意性虚构场景，非真实人物访谈；不构成医疗、心理诊断或就业承诺。
           ${orderNo ? `<br />订单号：<code>${esc(orderNo)}</code>（如需售后核验请保留）` : ''}
+          <br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a>
         </p>
       </section>`;
 
@@ -292,11 +318,16 @@
         </div>
         <p class="rep-meta">生成于 ${esc(fmtDate(r.ts))}${orderNo ? ` · 订单 ${esc(orderNo)}` : ''}</p>
       </div>
+      <section class="rep-sec rep-ai">
+        <div class="rep-sec-h"><span>00</span><h2>你的重启摘要</h2><em>SUMMARY</em></div>
+        <p class="rep-ai-text" id="rep-ai-text">${esc(localSummary(r))}</p>
+        <p class="rep-ai-note" id="rep-ai-note">基于你的作答本地生成</p>
+      </section>
       ${sec1}
       ${sec2}
       ${sec3}
       ${sec4}`;
   }
 
-  window.RB_Report = { build };
+  window.RB_Report = { build, localSummary };
 })();

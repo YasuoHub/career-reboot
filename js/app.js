@@ -88,6 +88,28 @@
   }
   function refreshPrice() { getPrice().then(applyPrice); }
 
+  /* ---------- 业务埋点（GTM dataLayer） ---------- */
+  function track(name, params = {}) {
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: name, ...params });
+    } catch (_) { /* 统计失败不影响业务 */ }
+  }
+
+  /* 本机匿名标识：用于邀请进度与跨设备解锁，不含任何身份信息 */
+  const uid = (() => {
+    try {
+      let v = localStorage.getItem('rb_uid');
+      if (!v || !/^[A-Za-z0-9_-]{8,64}$/.test(v)) {
+        v = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `u${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem('rb_uid', v);
+      }
+      return v;
+    } catch (_) { return `u${Date.now()}`; }
+  })();
+
   /* ---------- 封面 ---------- */
   function initCover() {
     $('#stat-total').textContent = store.total.toLocaleString('zh-CN');
@@ -277,6 +299,8 @@
   function finish() {
     result = score(); purgeDrafts();
     if (!result || !result.arc) { console.error(new Error('SCORING_RESULT_EMPTY')); toast('分析出了点状况，返回重来一次吧'); go('cover'); return; }
+    track('quiz_complete', { archetype: result.archetype });
+    claimReferral(result.archetype);
     go('computing');
     const lines = [['正在读取你的作答指纹<b>…</b>', 0], ['比对 <b>六维</b> 职业倾向与权重<b>…</b>', 500], ['校验个人要素与约束<b>…</b>', 1100], ['为你校准方向<b>…</b>', 1700]];
     const ul = $('#compute-lines'); ul.innerHTML = '';
@@ -310,6 +334,7 @@
     const expand = () => {
       if (expanded) return;
       expanded = true;
+      track('report_teaser_expand');
       const target = body ? body.scrollHeight + 42 : 560;
       card.classList.remove('is-collapsed');
       card.classList.add('is-expanded');
@@ -336,6 +361,71 @@
     });
   }
 
+  /* ---------- 邀请裂变 ---------- */
+  function inviteLink() {
+    return `${location.origin}/?ref=${encodeURIComponent(uid)}`;
+  }
+
+  function updateInviteUI(d) {
+    const card = $('#invite-card');
+    if (!card) return;
+    card.hidden = false;
+    const need = Number(d.need) || 3;
+    const progress = Math.min(need, Number(d.progress) || 0);
+    const fill = $('#invite-bar-fill');
+    if (fill) fill.style.width = `${Math.round(progress / need * 100)}%`;
+    const label = $('#invite-progress');
+    if (label) label.textContent = progress >= need ? '已达成，正在解锁…' : `当前进度 ${progress} / ${need}`;
+  }
+
+  async function loadInviteState() {
+    if (store.isUnlocked()) return;
+    const card = $('#invite-card');
+    if (!card) return;
+    try {
+      const r = await fetch(`/api/invite/state?uid=${encodeURIComponent(uid)}`, { headers: { Accept: 'application/json' } });
+      const d = await r.json().catch(() => ({}));
+      if (!d.configured) { card.hidden = true; return; }
+      updateInviteUI(d);
+      if (d.unlocked && d.token) {
+        store.saveUnlock({ via: 'share', token: d.token, exp: parseTokenExp(d.token) });
+        track('invite_unlock', { progress: d.progress });
+        toast('邀请已达成，深度报告解锁');
+        renderResult();
+      }
+    } catch (_) { card.hidden = true; }
+  }
+
+  async function shareInvite() {
+    const url = inviteLink();
+    const text = `我在「重启人格图鉴」测出了「${result?.arc?.cn || '我的重启人格'}」，你也来测测，顺便帮我解锁深度报告👉`;
+    track('invite_share');
+    if (navigator.share) {
+      try { await navigator.share({ title: '重启人格图鉴', text, url }); return; } catch (_) { /* 用户取消 */ }
+    }
+    const ok = await copyText(url);
+    toast(ok ? '邀请链接已复制，发给 3 位好友即可' : '复制失败，请手动复制地址栏');
+  }
+
+  async function claimReferral(archetype) {
+    let ref = '';
+    try { ref = sessionStorage.getItem('rb_ref') || ''; } catch (_) {}
+    if (!ref || ref === uid) return;
+    try {
+      const r = await fetch('/api/invite/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref, viewer: uid, archetype }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.counted) {
+        try { sessionStorage.removeItem('rb_ref'); } catch (_) {}
+        toast('已为好友的邀请进度 +1');
+        track('invite_claimed', { progress: d.progress });
+      }
+    } catch (_) { /* 静默失败，不影响测评 */ }
+  }
+
   function renderResult() {
     if (!result || !result.arc) { go('cover'); toast('结果没接住，请重测一次'); return; }
     const r = result, arc = r.arc, colors = arc.colors;
@@ -346,6 +436,7 @@
     const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
     const avatarFile = arc.avatarF.replace(/-f\.webp$/, r.gender === '男' ? '-m.webp' : '-f.webp');
     const unlocked = store.isUnlocked();
+    track('result_view', { archetype: r.archetype, top1: (r.top3 && r.top3[0] && r.top3[0].name) || '' });
 
     $('#res-body').innerHTML = `
       <p class="res-context">为「${r.context}」的你校准</p>
@@ -428,13 +519,24 @@
           <button id="btn-redo" class="btn btn-ghost">再测一次</button>
         </div>
       </div>
-      <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />数据仅保存在你的设备本地，不上传任何服务器。薪资与供需为公开报告量级参考。</p>
+      ${unlocked ? '' : `
+      <div class="invite-card" id="invite-card" hidden>
+        <div class="invite-head"><span>免费解锁</span><em>INVITE &amp; UNLOCK</em></div>
+        <p class="invite-copy">不想付费？邀请 <b>3</b> 位好友完成测评，也能免费解锁这份深度报告。</p>
+        <div class="invite-bar"><i id="invite-bar-fill"></i></div>
+        <p class="invite-progress" id="invite-progress">当前进度 0 / 3</p>
+        <button class="btn btn-ghost invite-btn" id="btn-invite" type="button">生成邀请链接</button>
+      </div>`}
+      <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />作答与报告默认仅保存在本机；邀请功能仅同步匿名标识与人格类型代号。薪资与供需为公开报告量级参考。<br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a></p>
     `;
 
     $('#btn-poster').addEventListener('click', openPoster);
     $('#btn-unlock').addEventListener('click', () => { if (store.isUnlocked()) openReport(); else openUnlock(); });
     $('#btn-redo').addEventListener('click', restart);
+    const inviteBtn = $('#btn-invite');
+    if (inviteBtn) inviteBtn.addEventListener('click', shareInvite);
     bindTeaser();
+    loadInviteState();
     go('result');
     bindAvatar();
     refreshPrice();
@@ -449,14 +551,18 @@
   async function openPoster() {
     try {
       const url = await RB_Poster.buildShare(result);
+      imageKind = 'poster';
       const tEl = $('#toast'); tEl.classList.remove('show'); clearTimeout(toastTimer);
       $('#poster-img').src = url; $('#link-copy').textContent = location.href.split('#')[0];
+      const hint = document.querySelector('#poster-modal .modal-hint');
+      if (hint) hint.innerHTML = '点「保存到相册」或<b>长按图片</b>均可存到手机';
       lockScroll(); $('#poster-modal').classList.remove('hidden');
+      track('poster_open');
     } catch (e) { console.error(e); toast('海报生成失败，刷新后重试'); }
   }
   async function saveImage() {
     const dataUrl = $('#poster-img').src; if (!dataUrl.startsWith('data:image')) { toast('海报还没生成好'); return; }
-    let blob; try { blob = await (await fetch(dataUrl)).blob(); } catch (_) { toast('图片读取失败，长按图片保存试试'); return; }
+    track('image_save', { kind: imageKind });    let blob; try { blob = await (await fetch(dataUrl)).blob(); } catch (_) { toast('图片读取失败，长按图片保存试试'); return; }
     const file = new File([blob], '重启人格图鉴.png', { type: 'image/png' });
     try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: '重启人格图鉴' }); return; } } catch (_) {}
     if (window.showSaveFilePicker) { try { const h = await window.showSaveFilePicker({ suggestedName: file.name }); const w = await h.createWritable(); await w.write(file); await w.close(); return; } catch (_) {} }
@@ -491,6 +597,7 @@
   }
 
   function showWechatTip() {
+    track('wechat_block');
     const link = location.href.split('#')[0];
     const overlay = overlayShell(`
       <div class="unlock-card">
@@ -509,6 +616,7 @@
 
   async function openUnlock() {
     if (store.isUnlocked()) { openReport(); return; }
+    track('unlock_click', { price: payPrice || '' });
     if (isWeChat()) { showWechatTip(); return; }
 
     // 弹窗立刻出现；对上一笔订单的核单放到后台，不阻塞点击反馈
@@ -525,6 +633,7 @@
         <button id="unlock-pay" class="btn btn-primary">支付宝支付 <span data-price>${priceLabel(payPrice)}</span></button>
         <button id="unlock-cancel" class="btn btn-ghost">取消</button>
         <p class="unlock-tip">付款完成后会跳回本页自动解锁；若没自动跳回，回本页再点一次「解锁深度报告」会先核实上一笔付款。</p>
+        <p class="unlock-legal">支付即表示同意 <a href="/legal.html#terms" target="_blank" rel="noopener">《用户协议》</a> 与 <a href="/legal.html#privacy" target="_blank" rel="noopener">《隐私政策》</a></p>
       </div>`);
     refreshPrice();
     const payBtn = overlay.querySelector('#unlock-pay');
@@ -572,6 +681,7 @@
     payBtn.addEventListener('click', async () => {
       payBtn.disabled = true;
       payBtn.textContent = '正在创建订单…';
+      track('order_request', { price: payPrice || '' });
       try {
         const res = await fetch('/api/alipay/create-order', {
           method: 'POST',
@@ -581,11 +691,13 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.payUrl) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
         store.saveOrder({ outTradeNo: data.outTradeNo, amount: data.amount, ts: Date.now() });
+        track('order_created', { amount: data.amount });
         overlay.remove();
         location.href = data.payUrl;  // 跳转支付宝手机网站收银台
       } catch (e) {
         payBtn.disabled = false;
         payBtn.textContent = '重试';
+        track('order_fail', { message: String(e.message || '').slice(0, 80) });
         toast('下单失败：' + e.message);
       }
     });
@@ -597,7 +709,67 @@
     const body = $('#report-body');
     if (!body) return;
     body.innerHTML = window.RB_Report.build(result, { order: store.getOrder(), unlock: store.getUnlock() });
+    track('report_open', { archetype: result.archetype, via: (store.getUnlock() || {}).via || 'pay' });
+    const cardBtn = $('#report-card-save');
+    if (cardBtn) cardBtn.addEventListener('click', saveReportCard);
+    loadAiSummary();
     go('report');
+  }
+
+  /* 报告摘要：优先 AI，失败保留本地文案 */
+  async function loadAiSummary() {
+    if (!result) return;
+    const el = $('#rep-ai-text'), note = $('#rep-ai-note');
+    if (!el) return;
+    if (result.aiSummary) {
+      el.textContent = result.aiSummary;
+      if (note) note.textContent = 'AI 生成 · 仅供参考';
+      return;
+    }
+    try {
+      const r = await fetch('/api/ai-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          archetype: result.archetype,
+          norm: result.norm,
+          top3: (result.top3 || []).slice(0, 3).map(c => c.name),
+          context: result.context || '',
+        }),
+      });
+      if (!r.ok) return;
+      const d = await r.json().catch(() => ({}));
+      if (d.summary) {
+        result.aiSummary = d.summary;
+        el.textContent = d.summary;
+        if (note) note.textContent = 'AI 生成 · 仅供参考';
+        track('ai_summary_ok');
+      }
+    } catch (_) { /* 静默降级为本地摘要 */ }
+  }
+
+  /* 报告分享卡 */
+  let imageKind = 'poster';
+  async function saveReportCard() {
+    if (!result || !RB_Poster.buildReportCard) return;
+    const btn = $('#report-card-save');
+    if (btn) { btn.disabled = true; btn.textContent = '正在生成…'; }
+    try {
+      const summary = result.aiSummary || (window.RB_Report && window.RB_Report.localSummary(result)) || '';
+      const url = await RB_Poster.buildReportCard(result, summary);
+      imageKind = 'report';
+      $('#poster-img').src = url;
+      $('#link-copy').textContent = location.href.split('#')[0];
+      const hint = document.querySelector('#poster-modal .modal-hint');
+      if (hint) hint.innerHTML = '报告卡已生成：点「保存到相册」或<b>长按图片</b>保存';
+      lockScroll(); $('#poster-modal').classList.remove('hidden');
+      track('report_card_open');
+    } catch (e) {
+      console.error(e);
+      toast('报告卡生成失败，请重试');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '保存报告卡'; }
+    }
   }
 
   /* ---------- 支付回跳验单 ---------- */
@@ -625,11 +797,13 @@
       if (!res.ok || !data.paid || !data.token) return false;
       store.saveUnlock({
         outTradeNo,
+        via: 'pay',
         tradeNo: data.tradeNo || '',
         paidAt: data.paidAt || '',
         token: data.token,
         exp: parseTokenExp(data.token),
       });
+      track('pay_success', { amount: data.amount || '', via: 'pay' });
       return true;
     } catch (e) {
       console.error('[verifyOrder]', e);
@@ -691,15 +865,16 @@
   async function doShare() {
     const shareUrl = location.href.split('#')[0];
     const ok = await RB_Poster.share(`${result.arc.cn} · 重启人格图鉴`, `测出我是「${result.arc.cn}」，你是哪种重启者？快来测👉${shareUrl}`);
+    track('poster_share', { ok });
     toast(ok ? '链接已复制，去发朋友圈吧' : '复制失败，请手动复制地址栏链接');
   }
 
   /* ---------- 重测 ---------- */
-  function restart() { clearTimeout(computingTimer); answers = {}; purgeDrafts(); result = null; currentQi = 0; go('quiz'); renderQuiz(false); }
+  function restart() { clearTimeout(computingTimer); answers = {}; purgeDrafts(); result = null; currentQi = 0; track('quiz_restart'); go('quiz'); renderQuiz(false); }
   function purgeDrafts() { for (const k in multiDraft) delete multiDraft[k]; }
 
   /* ---------- 事件绑定 ---------- */
-  $('#btn-start').addEventListener('click', () => { currentQi = 0; go('quiz'); renderQuiz(false); });
+  $('#btn-start').addEventListener('click', () => { track('quiz_start'); currentQi = 0; go('quiz'); renderQuiz(false); });
   $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); currentQi = 0; initCover(); go('cover'); });
   $('#cover-last').addEventListener('click', () => {
     const last = store.getLast();
@@ -712,6 +887,22 @@
   $('#poster-download').addEventListener('click', saveImage);
   document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#poster-modal').classList.contains('hidden')) closeModal(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && result && screens.result.classList.contains('active')) {
+      loadInviteState();
+    }
+  });
+
+  /* 记录来自分享链接的推荐人（好友完成测评后上报） */
+  (function captureRef() {
+    try {
+      const ref = new URLSearchParams(location.search).get('ref');
+      if (ref && ref !== uid) {
+        sessionStorage.setItem('rb_ref', ref);
+        track('referral_visit');
+      }
+    } catch (_) { /* 忽略存储异常 */ }
+  })();
 
   initCover();
   handlePayReturn();
