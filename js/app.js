@@ -297,16 +297,23 @@
       return { rank: 0, ...c, _rawScore, scoreNum: _rawScore, fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5 }, gapSkills: cs.filter(s => !profile.skills.includes(s)) };
     }).sort((a, b) => b._rawScore - a._rawScore);
 
-    scored.forEach(c => {
-      Object.entries(c.fb).forEach(([k, v]) => {
-        const lo = Math.min(...scored.map(x => x.fb[k])), hi = Math.max(...scored.map(x => x.fb[k]));
-        c.fb[k] = hi === lo ? 75 : Math.round(55 + 40 * ((v - lo) / (hi - lo)));
+    const raws = scored.map(c => c._rawScore);
+    const rawHi = Math.max(...raws), rawLo = Math.min(...raws);
+
+    // 五项适配因子：按本岗位内部强弱排序，映射到 81–98 的高分区间，保证互不相同
+    const factorLadder = [98, 94, 90, 86, 84];
+    const rankShift = [2, 0, -2];
+    scored.forEach((c, i) => {
+      const rawFb = { ...c.fb };
+      const order = Object.entries(rawFb).sort((a, b) => b[1] - a[1]);
+      const rawPct = rawHi === rawLo ? 0.5 : (c._rawScore - rawLo) / (rawHi - rawLo);
+      const shift = (rankShift[i] ?? -2) + (rawPct >= 0.5 ? 1 : 0);
+      order.forEach(([k], idx) => {
+        c.fb[k] = Math.max(81, Math.min(98, (factorLadder[idx] ?? 84) + shift));
       });
     });
 
     // 展示分：统一映射到 80+ 区间，并按名次拉开差异（前三档不重叠）
-    const raws = scored.map(c => c._rawScore);
-    const rawHi = Math.max(...raws), rawLo = Math.min(...raws);
     const baseByRank = [96, 90, 85];
     scored.forEach((c, i) => {
       const spread = rawHi === rawLo
