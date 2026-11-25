@@ -605,15 +605,20 @@
       $('#poster-img').src = url; $('#link-copy').textContent = location.href.split('#')[0];
       const hint = document.querySelector('#poster-modal .modal-hint');
       if (hint) hint.innerHTML = '点「保存到相册」或<b>长按图片</b>均可存到手机';
+      $('#poster-modal').classList.remove('mode-report');
       lockScroll(); $('#poster-modal').classList.remove('hidden');
       track('poster_open');
     } catch (e) { console.error(e); toast('海报生成失败，刷新后重试'); }
   }
   async function saveImage() {
     const dataUrl = $('#poster-img').src; if (!dataUrl.startsWith('data:image')) { toast('海报还没生成好'); return; }
-    track('image_save', { kind: imageKind });    let blob; try { blob = await (await fetch(dataUrl)).blob(); } catch (_) { toast('图片读取失败，长按图片保存试试'); return; }
-    const file = new File([blob], '重启人格图鉴.png', { type: 'image/png' });
-    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: '重启人格图鉴' }); return; } } catch (_) {}
+    track('image_save', { kind: imageKind });
+    let blob; try { blob = await (await fetch(dataUrl)).blob(); } catch (_) { toast('图片读取失败，长按图片保存试试'); return; }
+    const name = imageKind === 'report-full' ? '重启人格图鉴-深度报告.png'
+      : imageKind === 'report-card' ? '重启人格图鉴-报告摘要.png'
+      : '重启人格图鉴.png';
+    const file = new File([blob], name, { type: 'image/png' });
+    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name.replace('.png', '') }); return; } } catch (_) {}
     if (window.showSaveFilePicker) { try { const h = await window.showSaveFilePicker({ suggestedName: file.name }); const w = await h.createWritable(); await w.write(file); await w.close(); return; } catch (_) {} }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('已开始下载；若没进相册，长按上方图片保存');
@@ -774,6 +779,7 @@
     const body = $('#report-body');
     if (!body) return;
     body.innerHTML = window.RB_Report.build(result, { order: store.getOrder(), unlock: store.getUnlock() });
+    bindReportAvatar();
     track('report_open', { archetype: result.archetype, via: (store.getUnlock() || {}).via || 'pay' });
     const cardBtn = $('#report-card-save');
     if (cardBtn) cardBtn.addEventListener('click', saveReportCard);
@@ -813,27 +819,122 @@
     } catch (_) { /* 静默降级为本地摘要 */ }
   }
 
-  /* 报告分享卡 */
+  /* 报告完整图片 / 摘要卡 */
   let imageKind = 'poster';
+
+  function showBusy(text) {
+    let el = document.getElementById('busy-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'busy-overlay';
+      el.innerHTML = '<div class="busy-card"><span class="busy-spinner"></span><p id="busy-text"></p></div>';
+      document.body.appendChild(el);
+    }
+    const t = document.getElementById('busy-text');
+    if (t) t.textContent = text;
+    el.classList.add('show');
+  }
+  function hideBusy() {
+    const el = document.getElementById('busy-overlay');
+    if (!el) return;
+    el.classList.remove('show');
+    setTimeout(() => { if (el && !el.classList.contains('show')) el.remove(); }, 320);
+  }
+
+  function showImageInModal(url, hintHtml) {
+    $('#poster-img').src = url;
+    $('#link-copy').textContent = location.href.split('#')[0];
+    const hint = document.querySelector('#poster-modal .modal-hint');
+    if (hint) hint.innerHTML = hintHtml;
+    $('#poster-modal').classList.toggle('mode-report', imageKind === 'report-full');
+    lockScroll(); $('#poster-modal').classList.remove('hidden');
+  }
+
+  function bindReportAvatar() {
+    const img = document.querySelector('#report-body .rep-avatar');
+    if (!img) return;
+    const wrap = img.parentElement;
+    const done = () => wrap.classList.add('loaded');
+    if (img.complete && img.naturalWidth) done();
+    else {
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', () => wrap.classList.add('error'), { once: true });
+    }
+  }
+
+  async function waitImages(node) {
+    const imgs = [...node.querySelectorAll('img')];
+    await Promise.all(imgs.map(img => (img.complete && img.naturalWidth)
+      ? Promise.resolve()
+      : new Promise(resolve => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+        setTimeout(resolve, 4000);
+      })));
+  }
+
   async function saveReportCard() {
-    if (!result || !RB_Poster.buildReportCard) return;
+    if (!result) return;
     const btn = $('#report-card-save');
+    const label = '保存完整报告图片';
     if (btn) { btn.disabled = true; btn.textContent = '正在生成…'; }
+    showBusy('正在生成完整报告图片… 包含摘要、六维、TOP3 与 12 周路线');
+    let hideEls = [], prevDisplay = [];
     try {
-      const summary = result.aiSummary || (window.RB_Report && window.RB_Report.localSummary(result)) || '';
-      const url = await RB_Poster.buildReportCard(result, summary);
-      imageKind = 'report';
-      $('#poster-img').src = url;
-      $('#link-copy').textContent = location.href.split('#')[0];
-      const hint = document.querySelector('#poster-modal .modal-hint');
-      if (hint) hint.innerHTML = '报告卡已生成：点「保存到相册」或<b>长按图片</b>保存';
-      lockScroll(); $('#poster-modal').classList.remove('hidden');
-      track('report_card_open');
+      const node = $('#report-body');
+      if (!node) throw new Error('报告节点缺失');
+      // 图片里不要出现“保存图片”按钮与操作提示
+      hideEls = [node.querySelector('#report-card-save'), node.querySelector('.rep-kit-foot')].filter(Boolean);
+      prevDisplay = hideEls.map(el => el.style.display);
+      hideEls.forEach(el => { el.style.display = 'none'; });
+      const avatar = node.querySelector('.rep-avatar');
+      if (avatar) {
+        try {
+          if (!avatar.complete) await new Promise(resolve => {
+            avatar.addEventListener('load', resolve, { once: true });
+            avatar.addEventListener('error', resolve, { once: true });
+            setTimeout(resolve, 3000);
+          });
+          if (avatar.parentElement) avatar.parentElement.classList.add('loaded');
+        } catch (_) { /* 忽略头像异常，继续生成 */ }
+      }
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
+      await waitImages(node);
+      if (!window.htmlToImage) throw new Error('html-to-image 未加载');
+
+      const w = Math.max(320, node.scrollWidth);
+      const h = Math.max(400, node.scrollHeight);
+      const maxArea = 16e6;
+      let ratio = Math.min(2, window.devicePixelRatio || 1.5);
+      if (w * h * ratio * ratio > maxArea) ratio = Math.max(1, Math.sqrt(maxArea / (w * h)));
+
+      const url = await window.htmlToImage.toPng(node, {
+        pixelRatio: ratio,
+        backgroundColor: '#0b0b14',
+        width: w,
+        height: h,
+        cacheBust: false,
+        style: { margin: '0', paddingBottom: '24px' },
+      });
+      imageKind = 'report-full';
+      showImageInModal(url, '完整报告图片已生成：点「保存到相册」或<b>长按图片</b>保存');
+      track('report_image_open', { height: h, ratio });
     } catch (e) {
-      console.error(e);
-      toast('报告卡生成失败，请重试');
+      console.error('[report image]', e);
+      try {
+        const summary = result.aiSummary || (window.RB_Report && window.RB_Report.localSummary(result)) || '';
+        const url = await RB_Poster.buildReportCard(result, summary);
+        imageKind = 'report-card';
+        showImageInModal(url, '完整图片生成失败，已生成摘要卡：点「保存到相册」或<b>长按图片</b>保存');
+        toast('完整图片生成失败，已改为摘要卡');
+      } catch (e2) {
+        console.error('[report card fallback]', e2);
+        toast('图片生成失败，请重试');
+      }
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '保存报告卡'; }
+      try { hideEls.forEach((el, i) => { el.style.display = prevDisplay[i] || ''; }); } catch (_) {}
+      hideBusy();
+      if (btn) { btn.disabled = false; btn.textContent = label; }
     }
   }
 

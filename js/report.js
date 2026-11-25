@@ -105,26 +105,22 @@
   }
 
   function interviewQuestions(arc, c, p) {
-    const isOut = p.social >= 40;
-    const isAna = p.analytic >= p.creative;
-    const isDrv = (p.leader || 0) >= Math.max(p.social || 0, p.stable || 0, p.maker || 0);
+    const job = c.name || '这个方向';
+    const focusIds = (c.gapSkills && c.gapSkills.length) ? c.gapSkills : (c.req.skills || []);
+    const focus = focusIds.map(skillLabel)[0] || '上手能力';
+    const endRole = String(c.J || '').split('→').pop().replace(/。$/, '').trim() || '这个方向的核心岗位';
     const list = [
-      isOut ? '讲一次你说服别人改变决定的经历：你看到了什么信号，怎么推进的？'
-            : '讲一次你在不擅长社交的场合，仍然把事情推进下去的经历。',
-      isAna ? '讲一次你把一个模糊问题拆成可执行步骤，并验证其中关键假设的经历。'
-            : '讲一次你凭直觉先做、事后证明判断对了的经历。',
-      isDrv ? '讲一次你主动发起、并推动到结果的项目；中途最大的阻力是什么？'
-            : '讲一次你把团队或流程从混乱变有序的经历，具体改了哪几个环节？',
+      `你没做过「${job}」，凭什么觉得自己能上手？请用一件具体的事证明。`,
+      `入职前 30 天，你会优先补「${focus}」的哪一部分？学到什么程度算过关？`,
+      `「${c.week1}」——如果这周就让你做，你会怎么安排第一步？`,
+      `你希望三年后走到「${endRole}」吗？这条路径上你最担心哪一步？`,
     ];
     if (p.stage === 'gap') {
       list.unshift('这段空窗期你具体在做什么？为什么现在决定回来？');
-      list.push('如果重新上班，你打算怎么在前两周快速进入状态？');
     } else if (p.stage === 'fresh' || p.industry === '无经验') {
-      list.unshift('你没有正式工作经验，凭什么觉得自己能做这个方向？');
-      list.push('在校、兼职或自学期间，哪件事最能证明你上手快？');
+      list.unshift('你没有正式工作经验，哪件事最能证明你学得快？');
     }
-    list.push(`如果给你 3 个月从零进入「${c.name}」，你会按什么顺序学、先做哪个作品？`);
-    return list;
+    return list.slice(0, 5);
   }
 
   function resumeSample(c, p) {
@@ -186,7 +182,7 @@
     /* §1 你是谁 */
     const sec1 = `
       <section class="rep-sec">
-        <div class="rep-sec-h"><span>01</span><h2>你是谁</h2><em>WHO YOU ARE</em></div>
+        <div class="rep-sec-h"><span>02</span><h2>你是谁</h2><em>WHO YOU ARE</em></div>
         <div class="rep-prose">
           <h4>① 你的底色</h4>
           <p>你是「${esc(arc.cn)}」——${esc(arc.slogan)}。你的答案里反复出现 <b>${kw.map(k => `「${esc(k)}」`).join('')}</b> 三种倾向；
@@ -218,7 +214,6 @@
         </div>
 
         <h4 class="rep-h4">同型的人，怎么走过这段路</h4>
-        <p class="rep-case-note">以下为示意性虚构场景（非真实人物访谈），用来看见几种可能路径，不是标准答案。</p>
         <div class="rep-cases">
           ${(CASE_STORIES[r.archetype] || []).map(cs => `
             <div class="rep-case">
@@ -241,7 +236,7 @@
     /* §2 TOP3 展开 */
     const sec2 = `
       <section class="rep-sec">
-        <div class="rep-sec-h"><span>02</span><h2>你可以做什么</h2><em>THREE ROADS</em></div>
+        <div class="rep-sec-h"><span>03</span><h2>你可以做什么</h2><em>THREE ROADS</em></div>
         <p class="rep-lead">下面三条是你这份作答里匹配度最高的方向。每条都给出「为什么是你 + 12 周怎么走 + 怎么把经历讲成故事」。</p>
         ${(r.top3 || []).map((c, i) => {
           const plan = planOf(c, p);
@@ -260,7 +255,7 @@
             <div class="rep-fbs">
               ${Object.entries(fb).map(([k, v]) => bar(k, v)).join('')}
             </div>
-            <p class="rep-note">这些分不是玄学：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间。</p>
+            <p class="rep-note">评分标准：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间。</p>
 
             <h4>12 周路线（${esc(plan.pace.label)}）</h4>
             <p class="rep-note">${esc(plan.pace.hint)}</p>
@@ -288,7 +283,7 @@
     const top1 = (r.top3 || [])[0] || {};
     const sec3 = `
       <section class="rep-sec">
-        <div class="rep-sec-h"><span>03</span><h2>接下来三件事</h2><em>NEXT 3 MOVES</em></div>
+        <div class="rep-sec-h"><span>04</span><h2>接下来三件事</h2><em>NEXT 3 MOVES</em></div>
         <div class="rep-moves">
           <div class="rep-move">
             <b>本周</b>
@@ -312,7 +307,7 @@
     /* §4 尾卡 */
     const sec4 = `
       <section class="rep-sec rep-tail">
-        <div class="rep-sec-h"><span>04</span><h2>带走这张卡</h2><em>YOUR KIT</em></div>
+        <div class="rep-sec-h"><span>05</span><h2>带走这张卡</h2><em>YOUR KIT</em></div>
         <div class="rep-kit">
           <p class="rep-kit-title">${esc(arc.cn)} <small>${esc(arc.en)}</small></p>
           <p class="rep-kit-line">${esc(arc.slogan)}</p>
@@ -322,8 +317,8 @@
             <span>${esc(hoursText)}</span>
             <span>适配首选：${esc(top1.name || '—')}</span>
           </div>
-          <p class="rep-kit-foot">保存报告卡，或回到结果页生成分享海报。</p>
-          <button class="btn btn-primary rep-card-btn" id="report-card-save" type="button">保存报告卡</button>
+          <p class="rep-kit-foot">保存完整报告图片，或回到结果页生成分享海报。</p>
+          <button class="btn btn-primary rep-card-btn" id="report-card-save" type="button">保存完整报告图片</button>
         </div>
         <p class="rep-legal">
           本报告基于你在 ${esc(fmtDate(r.ts))} 的本地作答生成；同型人物案例为示意性虚构场景，非真实人物访谈；不构成医疗、心理诊断或就业承诺。
@@ -341,12 +336,15 @@
             <h1>${esc(arc.cn)}<small>${esc(arc.en)}</small></h1>
             <p class="rep-slogan">${esc(arc.slogan)}</p>
           </div>
-          <img class="rep-avatar" src="/avatars/${esc(avatarFile)}" alt="${esc(arc.cn)}" loading="lazy" />
+          <div class="rep-avatar-wrap">
+            <span class="rep-avatar-skel" aria-hidden="true"></span>
+            <img class="rep-avatar" src="/avatars/${esc(avatarFile)}" alt="${esc(arc.cn)}" loading="eager" decoding="async" />
+          </div>
         </div>
         <p class="rep-meta">生成于 ${esc(fmtDate(r.ts))}${orderNo ? ` · 订单 ${esc(orderNo)}` : ''}</p>
       </div>
       <section class="rep-sec rep-ai">
-        <div class="rep-sec-h"><span>00</span><h2>你的重启摘要</h2><em>SUMMARY</em></div>
+        <div class="rep-sec-h"><span>01</span><h2>你的重启摘要</h2><em>SUMMARY</em></div>
         <p class="rep-ai-text" id="rep-ai-text">${esc(localSummary(r))}</p>
         <p class="rep-ai-note" id="rep-ai-note">基于您的作答智能生成</p>
       </section>

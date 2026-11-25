@@ -759,12 +759,36 @@ html.lock, body.lock { overflow: hidden; }
    ============================================================ */
 #sc-report { max-width: 640px; }
 
+/* 生成图片时的全屏 loading */
+#busy-overlay {
+  position: fixed; inset: 0; z-index: 2147483646;
+  display: none; place-items: center;
+  background: rgba(7, 6, 16, .72);
+  backdrop-filter: blur(8px);
+}
+#busy-overlay.show { display: grid; }
+.busy-card {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 28px 30px; border-radius: 20px; max-width: 300px; text-align: center;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+}
+.busy-spinner {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .15);
+  border-top-color: var(--accent);
+  animation: busySpin .8s linear infinite;
+}
+@keyframes busySpin { to { transform: rotate(360deg); } }
+.busy-card p { margin: 0; font-size: 13px; line-height: 1.65; color: var(--ink-dim); }
+
 .report-top {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: 12px;
   padding: 6px 0 14px; margin: 0 -4px;
-  background: linear-gradient(180deg, var(--bg) 62%, transparent);
-  backdrop-filter: blur(10px);
+  background: none;
+  backdrop-filter: none;
 }
 .report-title { font-size: 12px; letter-spacing: .28em; color: var(--ink-dim); }
 .report-body { padding-bottom: 48px; }
@@ -785,11 +809,32 @@ html.lock, body.lock { overflow: hidden; }
   letter-spacing: .28em; color: var(--ink-dim); text-transform: uppercase;
 }
 .rep-slogan { font-size: 14px; line-height: 1.75; color: color-mix(in srgb, var(--ink) 82%, transparent); }
-.rep-avatar {
-  flex: none; width: 108px; height: 136px; object-fit: cover;
-  border-radius: 16px; border: 1px solid rgba(255, 255, 255, .1);
-  box-shadow: 0 16px 48px var(--glow);
+.rep-avatar-wrap {
+  position: relative; flex: none;
+  width: 147px; height: 184px;
+  border-radius: 18px; overflow: hidden;
+  background: rgba(255, 255, 255, .03);
+  box-shadow: 0 18px 56px var(--glow), 0 0 0 1px rgba(255, 255, 255, .08);
 }
+.rep-avatar {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .35s ease;
+}
+.rep-avatar-wrap.loaded .rep-avatar { opacity: 1; }
+.rep-avatar-skel {
+  position: absolute; inset: 0; display: block;
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  overflow: hidden;
+}
+.rep-avatar-skel::after {
+  content: ''; position: absolute; inset: -40% -60%;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.18) 50%, transparent 62%);
+  animation: avatarShine 1.35s linear infinite;
+}
+.rep-avatar-wrap.loaded .rep-avatar-skel,
+.rep-avatar-wrap.error .rep-avatar-skel { opacity: 0; transition: opacity .3s; }
+.rep-avatar-wrap.error { background: linear-gradient(135deg, var(--accent), var(--deep)); }
+.rep-avatar-wrap.error .rep-avatar { display: none; }
 .rep-meta { margin-top: 18px; font-size: 11.5px; color: #6f6c86; letter-spacing: .03em; }
 
 .rep-sec { padding: 30px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
@@ -914,8 +959,10 @@ html.lock, body.lock { overflow: hidden; }
 
 @media (max-width: 430px) {
   .rep-hero h1 { font-size: 34px; }
-  .rep-avatar { width: 84px; height: 106px; }
+  .rep-avatar-wrap { width: 116px; height: 145px; }
   .rep-plan li { grid-template-columns: 1fr; gap: 2px; }
   .rep-plan li b { margin-top: 6px; }
   .rep-sec { padding: 24px 0; }
 }
+/* 完整报告长图：弹窗内可滚动查看，不压缩成一条 */
+#poster-modal.mode-report #poster-img { max-height: none; }

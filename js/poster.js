@@ -377,7 +377,7 @@ const RB_Poster = (() => {
 
     const ink = '#f5f3ff', dim = 'rgba(245,243,255,.62)', faint = 'rgba(245,243,255,.42)';
 
-    // 顶栏 + 二维码
+    // 顶栏 + 角色头像（右上）
     ctx.textAlign = 'left';
     ctx.font = `700 19px ${FS}`;
     ctx.fillStyle = colors.accent;
@@ -386,17 +386,20 @@ const RB_Poster = (() => {
     ctx.fillStyle = faint;
     ctx.fillText(`图鉴 №${arc.num} · 仅占 ${arc.rarity}%`, 56, 116);
 
-    const qr = await loadQR(
-      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(location.href.split('#')[0]),
-      200
-    );
-    const qs = 96, qx = W - 56 - qs, qy = 58;
-    if (qr) {
-      ctx.save(); rr(ctx, qx, qy, qs, qs, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
-      ctx.drawImage(qr, qx + 7, qy + 7, qs - 14, qs - 14);
+    const gender = result.gender === '男' ? 'm' : 'f';
+    const avatarFile = String(arc.avatarF || '').replace(/-f\.webp$/, `-${gender}.webp`);
+    const arcImg = await loadImg('/avatars/' + avatarFile, 2500);
+    const aw = 104, ah = 130, ax = W - 56 - aw, ay = 50;
+    if (arcImg) {
+      ctx.save();
+      ctx.shadowColor = colors.glow; ctx.shadowBlur = 48; ctx.shadowOffsetY = 8;
+      rr(ctx, ax, ay, aw, ah, 16); ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fill(); ctx.clip();
+      ctx.drawImage(arcImg, ax, ay, aw, ah);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
+      rr(ctx, ax, ay, aw, ah, 16); ctx.stroke();
     } else {
-      rr(ctx, qx, qy, qs, qs, 12); ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.stroke();
+      rr(ctx, ax, ay, aw, ah, 16); ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fill();
     }
 
     // 类型
