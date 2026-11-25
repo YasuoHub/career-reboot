@@ -788,7 +788,7 @@ html.lock, body.lock { overflow: hidden; }
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: 12px;
   padding: 6px 0 14px; margin: 0 -4px;
-  background: linear-gradient(180deg, #0b0b14 72%, rgba(11, 11, 20, .92) 100%);
+  background: transparent;
 }
 .report-title { font-size: 12px; letter-spacing: .28em; color: var(--ink-dim); }
 .report-body { padding-bottom: 48px; }
@@ -1063,6 +1063,9 @@ html.lock, body.lock { overflow: hidden; }
 .route-growth .route-badge { color: #54c5ff; background: #54c5ff14; border-color: #54c5ff55; }
 .route-ceiling .route-badge { color: #ffb020; background: #ffb02014; border-color: #ffb02055; }
 .route-badge i { font-style: normal; font-size: 13px; }
+.route-head { flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.route-head .career-sal { margin-left: auto; }
+.route-name { display: block; margin: 2px 0 3px; font-size: 17.5px; line-height: 1.45; }
 .route-sub { font-size: 11.5px; color: var(--ink-dim); margin: -3px 0 9px 1px; }
 .career-fit small { margin-left: auto; font-size: 10.5px; color: #6f6c86; }
 .route-why {

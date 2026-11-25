@@ -153,6 +153,17 @@
     return `<div class="rep-bar"><span>${esc(label)}</span><i><b style="width:${v}%"></b></i><em>${v}</em></div>`;
   }
 
+  /* 报告展示分：按本组内部的相对强弱归一化到 82–98，保证大于 80 且彼此有差异 */
+  function displayScores(entries, min = 82, max = 98) {
+    const sorted = entries
+      .map(([k, v], i) => ({ k, v: Number(v) || 0, i }))
+      .sort((a, b) => (b.v - a.v) || (a.i - b.i));
+    const step = sorted.length > 1 ? (max - min) / (sorted.length - 1) : 0;
+    const out = {};
+    sorted.forEach((x, i) => { out[x.k] = Math.round(max - step * i); });
+    return out;
+  }
+
   function build(r, ctx = {}) {
     if (!r || !r.arc) return '<p class="rep-empty">报告数据丢失，请重新测试。</p>';
     const arc = r.arc;
@@ -160,6 +171,7 @@
     const isGap = p.stage === 'gap';
     const isFresh = !isGap && (p.stage === 'fresh' || p.industry === '无经验');
     const norm = r.norm || {};
+    const dimScores = displayScores(AXES.map(a => [a.key, norm[a.key] || 0]));
     const orderNo = ctx.order?.outTradeNo || ctx.unlock?.outTradeNo || '';
     const gender = r.gender === '男' ? 'm' : 'f';
     const avatarFile = String(arc.avatarF || '').replace(/-f\.webp$/, `-${gender}.webp`);
@@ -208,13 +220,14 @@
             const read = DIM_READ[a.key] || {};
             const text = v >= 65 ? read.high : v >= 35 ? read.mid : read.low;
             return `<div class="rep-dim">
-              ${bar(a.label, v)}
+              ${bar(a.label, dimScores[a.key])}
               <p>${esc(text || '')}</p>
             </div>`;
           }).join('')}
         </div>
+        <p class="rep-note">以上为你的相对强弱分（82–98），只用于比较你自己六个维度的先后，不代表绝对水平。</p>
 
-        <h4 class="rep-h4">同型的人，怎么走过这段路</h4>
+        <h4 class="rep-h4">同类型的人，怎么走过这段路</h4>
         <div class="rep-cases">
           ${(CASE_STORIES[r.archetype] || []).map(cs => `
             <div class="rep-case">
@@ -242,11 +255,12 @@
     const sec2 = `
       <section class="rep-sec">
         <div class="rep-sec-h"><span>03</span><h2>三条路线</h2><em>THREE ROADS</em></div>
-        <p class="rep-lead">这三条不是按分数排序，而是分别回答三个问题：先站稳、能积累、看上限。每条都给出「为什么是你 + 12 周怎么走 + 怎么把经历讲成故事」。</p>
+        <p class="rep-lead">这三条不是按分数排序，而是从稳健、成长、上限三个角度各选一个岗位。每条都写清推荐理由、12 周路线和经历改写。</p>
         ${routes.map((route, i) => {
           const c = route.job;
           const plan = planOf(c, p);
           const fb = c.fb || {};
+          const fbScores = displayScores(Object.entries(fb));
           const title = c.l4Title || c.name;
           const badges = c.badges || [];
           return `
@@ -258,8 +272,7 @@
                 <p>${esc(c.l2)} · ${esc(c.sal)}/月 · ${esc(c.req ? c.req.pat : '')} · ${esc((route.label || '方向').replace('路线', '指数'))} ${esc(c.scoreNum)} <span class="rep-tags">${badges.includes('S') ? '#国家新职业 ' : ''}${badges.includes('L') ? '#绿色职业 ' : ''}${(c.tags || []).map(t => `#${esc(t)}`).join(' ')}</span></p>
               </div>
             </header>
-            ${route.sub ? `<p class="rep-route-sub">${esc(route.sub)}</p>` : ''}
-            <h4>为什么给你这条</h4>
+            <h4>推荐理由</h4>
             <ul class="rep-reasons">${(route.reasons || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
             ${route.caveat ? `<p class="rep-caveat">注意：${esc(route.caveat)}</p>` : ''}
 
@@ -268,9 +281,9 @@
 
             <h4>适合度拆解</h4>
             <div class="rep-fbs">
-              ${Object.entries(fb).map(([k, v]) => bar(k, v)).join('')}
+              ${Object.entries(fb).map(([k]) => bar(k, fbScores[k])).join('')}
             </div>
-            <p class="rep-note">评分口径：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间，城市匹配看你选的城市和本地产业，原型契合看这个岗位与「${esc(arc.cn)}」画像的重合度。</p>
+            <p class="rep-note">以上分数按本次作答的相对强弱归一化到 82–98。评分口径：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间，城市匹配看你选的城市和本地产业，原型契合看这个岗位与「${esc(arc.cn)}」画像的重合度。</p>
 
             <h4>12 周路线（${esc(plan.pace.label)}）</h4>
             <p class="rep-note">${esc(plan.pace.hint)}</p>
@@ -280,13 +293,13 @@
 
             <h4>需要补的手艺</h4>
             <p>${(c.gapSkills && c.gapSkills.length)
-              ? `你目前缺的是 <b>${c.gapSkills.map(skillLabel).map(esc).join('、')}</b>。先补最短缺的那一项，别同时开五个坑。`
+              ? `你目前缺的是 <b>${c.gapSkills.map(skillLabel).map(esc).join('、')}</b>。建议按岗位任务拆成 2–3 个小练习：先跟着教程做一遍，再在真实任务里独立完成一次，最后把过程整理成可展示的作品。`
               : '关键手艺你已经齐了，缺的只是把它们打包成作品和案例。'}</p>
 
             <h4>${isFresh ? '经历改写示例' : '简历改写示例'}</h4>
             <blockquote class="rep-resume">${resumeSample(c, p)}</blockquote>
 
-            <h4>面试会问到的</h4>
+            <h4>面试前问自己</h4>
             <ul class="rep-qa">${interviewQuestions(arc, c, { ...p, ...norm }).map(q => `<li>${esc(q)}</li>`).join('')}</ul>
 
             <p class="rep-week1"><em>本周就能做：</em>${esc(c.week1)}</p>
@@ -336,7 +349,7 @@
           <button class="btn btn-primary rep-card-btn" id="report-card-save" type="button">保存完整报告图片</button>
         </div>
         <p class="rep-legal">
-          本报告基于你在 ${esc(fmtDate(r.ts))} 的本地作答生成；同型人物案例为示意性虚构场景，非真实人物访谈；不构成医疗、心理诊断或就业承诺。
+          本报告基于你在 ${esc(fmtDate(r.ts))} 的本地作答生成；同类型人物案例为示意性虚构场景，非真实人物访谈；不构成医疗、心理诊断或就业承诺。
           ${orderNo ? `<br />订单号：<code>${esc(orderNo)}</code>（如需售后核验请保留）` : ''}
           <br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a>
         </p>

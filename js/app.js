@@ -726,16 +726,14 @@
           const dots = Math.max(0, Math.min(5, Math.round((c.scoreNum || 0) / 20)));
           return `
           <div class="career-card route-card route-${route.key}">
-            <div class="career-top">
+            <div class="career-top route-head">
               <span class="route-badge"><i>${route.icon}</i>${route.label}</span>
-              <span class="career-name">${c.l4Title}</span>
-            </div>
-            <p class="route-sub">${route.sub}</p>
-            <p class="route-taxonomy">行业：${c.l2} · ${c.l1Name}</p>
-            <div class="career-meta">
               <span class="career-badges">${badges.includes('S') ? '<i class="badge-official s">国家新职业</i>' : ''}${badges.includes('L') ? '<i class="badge-official l">绿色职业</i>' : ''}</span>
               <span class="career-sal">${c.sal}/月</span>
             </div>
+            <h3 class="career-name route-name">${c.l4Title}</h3>
+            <p class="route-sub">${route.sub}</p>
+            <p class="route-taxonomy">行业：${c.l2} · ${c.l1Name}</p>
             <p class="career-fit">${c.routeLabel.replace('路线', '指数')} <b>${c.scoreNum}</b><span class="dim-dots">${'●'.repeat(dots)}${'○'.repeat(5 - dots)}</span><small>${c.req.pat} · ${c.cityLabel}</small></p>
             <div class="route-why">
               <b>为什么推荐给你</b>
@@ -751,7 +749,7 @@
             ${c.gapSkills.length ? `<p class="career-gap">补上这几块就能平移过去：<b>${c.gapSkills.map(skillLabel).join('、')}</b></p>` : `<p class="career-gap done">关键手艺你已经齐了，直接上。</p>`}
             ${route.caveat ? `<p class="route-caveat">注意：${route.caveat}</p>` : ''}
             <p class="career-week"><em>本周就能做：</em>${c.week1}</p>
-            ${c.alternatives && c.alternatives.length ? `<p class="route-alt">同族还可以看：${c.alternatives.map(a => `<span>${a.name}<em>${a.sal}</em></span>`).join('')}</p>` : ''}
+            ${c.alternatives && c.alternatives.length ? `<p class="route-alt">相似岗位：${c.alternatives.map(a => `<span>${a.name}<em>${a.sal}</em></span>`).join('')}</p>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -1107,19 +1105,23 @@
   }
 
   /** 给截图加左右留白，并把头像用 Canvas 叠上去，避免截图库渲染 img 失败 */
-  async function composeReportImage(baseUrl, node, avatar, padCss = 24) {
+  async function composeReportImage(baseUrl, node, avatar, padCss = 24, cropCssW = 0) {
     const base = await loadImageEl(baseUrl);
     if (!base) return baseUrl;
-    const sx = base.naturalWidth / Math.max(1, node.scrollWidth);
+    const fullW = Math.max(1, node.scrollWidth);
+    const cssW = Math.max(320, Math.min(fullW, cropCssW || fullW));
+    const sx = base.naturalWidth / fullW;
     const sy = base.naturalHeight / Math.max(1, node.scrollHeight);
+    // 截图宽度按内容宽度裁掉右侧多余背景，避免长图标题旁出现黑色空块
+    const cropW = Math.max(1, Math.round(base.naturalWidth * cssW / fullW));
     const pad = Math.round(padCss * Math.min(sx, sy));
-    const W = base.naturalWidth + pad * 2;
+    const W = cropW + pad * 2;
     const H = base.naturalHeight + pad * 2;
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
     ctx.fillStyle = '#0b0b14'; ctx.fillRect(0, 0, W, H);
-    ctx.drawImage(base, pad, pad);
+    ctx.drawImage(base, 0, 0, cropW, base.naturalHeight, pad, pad, cropW, base.naturalHeight);
 
     if (avatar && avatar.src && avatar.box) {
       const im = await loadImageEl(avatar.src);
@@ -1232,6 +1234,7 @@
       if (!window.htmlToImage) throw new Error('html-to-image 未加载');
 
       const w = Math.max(320, node.scrollWidth);
+      const contentW = Math.max(320, Math.round(node.getBoundingClientRect().width));
       const h = Math.max(400, node.scrollHeight);
       const maxArea = 16e6;
       let ratio = Math.max(1.5, Math.min(2, window.devicePixelRatio || 1.5));
@@ -1245,7 +1248,7 @@
         cacheBust: false,
         style: { margin: '0', paddingBottom: '24px' },
       });
-      const url = await composeReportImage(rawUrl, node, { box: avatarBox, src: avatarSrc }, 24);
+      const url = await composeReportImage(rawUrl, node, { box: avatarBox, src: avatarSrc }, 24, contentW);
       imageKind = 'report-full';
       showImageInModal(url, '完整报告图片已生成：点「保存到相册」或<b>长按图片</b>保存');
       track('report_image_open', { height: h, ratio });
