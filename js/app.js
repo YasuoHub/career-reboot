@@ -518,7 +518,7 @@
         <section class="report-teaser is-collapsed" id="report-teaser" role="button" tabindex="0" aria-expanded="false" aria-label="展开查看完整深度报告内容">
           <div class="teaser-body">
             <div class="teaser-h"><span>深度报告</span><em>DEEP REPORT</em></div>
-            <h3>结果页给你方向，深度报告给你一条能照着走的路线。</h3>
+            <h3>找准了方向，距离成功就只差一份深度报告。</h3>
             <ul class="teaser-list">
               <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
               <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
