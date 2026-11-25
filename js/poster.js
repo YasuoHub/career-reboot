@@ -467,7 +467,7 @@ const RB_Poster = (() => {
       ctx.strokeStyle = 'rgba(255,255,255,.12)'; rr(ctx, 56, 900, W - 112, 58, 16); ctx.stroke();
       ctx.font = `700 15px ${FS}`;
       ctx.fillStyle = faint;
-      ctx.fillText('首选方向', 76, 924);
+      ctx.fillText(top1.routeLabel || '稳健路线', 76, 924);
       ctx.font = `900 21px ${FS}`;
       ctx.fillStyle = ink;
       const nm = wrap(ctx, top1.name, W - 260)[0] || top1.name;

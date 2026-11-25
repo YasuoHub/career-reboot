@@ -23,10 +23,11 @@
     if (!r || !r.arc) return '';
     const arc = r.arc, p = r.profile || {}, norm = r.norm || {};
     const maxAxis = AXES.reduce((a, b) => ((norm[a.key] || 0) >= (norm[b.key] || 0) ? a : b), AXES[0]);
-    const top1 = (r.top3 || [])[0] || {};
+    const topRoute = (r.routes || [])[0];
+    const top1 = (topRoute && topRoute.job) || (r.top3 || [])[0] || {};
     const pace = p.hours === 0 ? '全职冲刺' : p.hours === 1 ? '每周 5–15 小时' : '每周 2–5 小时';
     return `你是「${arc.cn}」：${arc.slogan} 你的「${maxAxis.label}」最突出，这让你在需要这种能力的场景里更省力。`
-      + `当前最值得先验证的方向是「${top1.name || '你选的第一方向'}」；按 ${pace} 的节奏，先用 1 周做一次最低成本的小验证，`
+      + `当前最值得先验证的是${topRoute ? `「${topRoute.label}」里的` : ''}「${top1.l4Title || top1.name || '你选的第一方向'}」；按 ${pace} 的节奏，先用 1 周做一次最低成本的小验证，`
       + `再决定要不要把时间押进去。`;
   }
 
@@ -97,7 +98,7 @@
       pace,
       items: [
         { w: '第 1 周 · 先验证入口', t: c.week1 },
-        { w: `第 2–4 周 · 补基础（${pace.week}）`, t: `按「${c.L}」拆成可打卡的小节；先完成第一轮通读 + 一个最小练习。重点补：${need}。` },
+        { w: `第 2–4 周 · 补基础（${pace.week}）`, t: `按「${c.learn}」拆成可打卡的小节；先完成第一轮通读 + 一个最小练习。重点补：${need}。` },
         { w: '第 5–8 周 · 做出作品', t: `围绕「${c.F}」做一个能发给别人看的小作品。不求赚钱，只求可展示、可被评价。` },
         { w: '第 9–12 周 · 换机会', t: `按「${c.J}」的路径投 10 个岗位或接 1 个低价单，带着作品换真实反馈，再决定要不要加码。` },
       ],
@@ -105,8 +106,8 @@
   }
 
   function interviewQuestions(arc, c, p) {
-    const job = c.name || '这个方向';
-    const focusIds = (c.gapSkills && c.gapSkills.length) ? c.gapSkills : (c.req.skills || []);
+    const job = c.l4Title || c.name || '这个方向';
+    const focusIds = (c.gapSkills && c.gapSkills.length) ? c.gapSkills : (c.skills || []);
     const focus = focusIds.map(skillLabel)[0] || '上手能力';
     const endRole = String(c.J || '').split('→').pop().replace(/。$/, '').trim() || '这个方向的核心岗位';
     const list = [
@@ -229,33 +230,47 @@
           <span>${esc(eduText || '学历未填')}</span>
           <span>${esc(p.industry ? `前行业：${p.industry}` : '前行业未填')}</span>
           <span>${esc(prefText ? `工作形态：${prefText}` : '工作形态未填')}</span>
+          <span>${esc(p.cityNames && p.cityNames.length ? `目标城市：${p.cityNames.join(' / ')}` : '目标城市未填')}</span>
           <span>${esc(hoursText)}</span>
         </div>
       </section>`;
 
-    /* §2 TOP3 展开 */
+    /* §2 三条路线展开 */
+    const routes = (r.routes && r.routes.length)
+      ? r.routes
+      : (r.top3 || []).map((job, i) => ({ key: `route${i}`, label: `方向 ${i + 1}`, sub: '', job, reasons: [], caveat: '' }));
     const sec2 = `
       <section class="rep-sec">
-        <div class="rep-sec-h"><span>03</span><h2>你可以做什么</h2><em>THREE ROADS</em></div>
-        <p class="rep-lead">下面三条是你这份作答里匹配度最高的方向。每条都给出「为什么是你 + 12 周怎么走 + 怎么把经历讲成故事」。</p>
-        ${(r.top3 || []).map((c, i) => {
+        <div class="rep-sec-h"><span>03</span><h2>三条路线</h2><em>THREE ROADS</em></div>
+        <p class="rep-lead">这三条不是按分数排序，而是分别回答三个问题：先站稳、能积累、看上限。每条都给出「为什么是你 + 12 周怎么走 + 怎么把经历讲成故事」。</p>
+        ${routes.map((route, i) => {
+          const c = route.job;
           const plan = planOf(c, p);
           const fb = c.fb || {};
+          const title = c.l4Title || c.name;
+          const badges = c.badges || [];
           return `
           <article class="rep-career">
             <header class="rep-career-h">
-              <span class="rep-rank">#${i + 1}</span>
+              <span class="rep-rank">${esc(route.label || `方向 ${i + 1}`)}</span>
               <div>
-                <h3>${esc(c.name)}</h3>
-                <p>${esc(c.sal)}/月 · 适配度 ${esc(c.scoreNum)} <span class="rep-tags">${(c.tags || []).map(t => `#${esc(t)}`).join(' ')}</span></p>
+                <h3>${esc(title)}</h3>
+                <p>${esc(c.l2)} · ${esc(c.sal)}/月 · ${esc(c.req ? c.req.pat : '')} · ${esc((route.label || '方向').replace('路线', '指数'))} ${esc(c.scoreNum)} <span class="rep-tags">${badges.includes('S') ? '#国家新职业 ' : ''}${badges.includes('L') ? '#绿色职业 ' : ''}${(c.tags || []).map(t => `#${esc(t)}`).join(' ')}</span></p>
               </div>
             </header>
+            ${route.sub ? `<p class="rep-route-sub">${esc(route.sub)}</p>` : ''}
+            <h4>为什么给你这条</h4>
+            <ul class="rep-reasons">${(route.reasons || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+            ${route.caveat ? `<p class="rep-caveat">注意：${esc(route.caveat)}</p>` : ''}
 
-            <h4>为什么适合你</h4>
+            <h4>这个岗位每天在做什么</h4>
+            <p>${esc((c.tasks || []).join(' · '))}</p>
+
+            <h4>适合度拆解</h4>
             <div class="rep-fbs">
               ${Object.entries(fb).map(([k, v]) => bar(k, v)).join('')}
             </div>
-            <p class="rep-note">评分标准：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间。</p>
+            <p class="rep-note">评分口径：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间，城市匹配看你选的城市和本地产业，原型契合看这个岗位与「${esc(arc.cn)}」画像的重合度。</p>
 
             <h4>12 周路线（${esc(plan.pace.label)}）</h4>
             <p class="rep-note">${esc(plan.pace.hint)}</p>
@@ -299,7 +314,7 @@
           </div>
           <div class="rep-move">
             <b>下月</b>
-            <p>按「${esc(top1.L || '第 2–4 周计划')}」完成第一阶段，并产出一个能公开看的小作品（发到小红书 / 知乎 / GitHub 任一平台）。</p>
+            <p>按「${esc(top1.learn || '第 2–4 周计划')}」完成第一阶段，并产出一个能公开看的小作品（发到小红书 / 知乎 / GitHub 任一平台）。</p>
           </div>
         </div>
       </section>`;

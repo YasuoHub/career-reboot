@@ -6,7 +6,9 @@
    ============================================================ */
 (() => {
   const $ = s => document.querySelector(s);
-  const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, CLASSIFY_DIM, ACTIONS } = window.RB_DATA;
+  const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, CLASSIFY_DIM, JOBS, CITIES, CITY_TIER_RANK, CITY_TIER_SALARY, CITY_REGIONS } = window.RB_DATA;
+  const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
+  const EDU_LABEL = { 1: '中专/高中', 2: '大专', 3: '本科', 4: '硕士+' };
 
   const MODE_LABELS = {
     mode_urgent: '刚离职 · 速返优先',
@@ -38,7 +40,7 @@
     getLast() {
       try {
         const r = JSON.parse(localStorage.getItem('rb_last'));
-        return r && r.arc && Array.isArray(r.top3) ? r : null;
+        return r && r.arc && Array.isArray(r.routes) && Array.isArray(r.top3) ? r : null;
       } catch (_) { return null; }
     },
     /* 最近一次下单（用于支付回跳后没有带 out_trade_no 时兜底） */
@@ -56,6 +58,7 @@
   };
   let answers = {}, result = null;
   const multiDraft = {};
+  const cityDraft = {};
   let currentQi = 0;
 
   let toastTimer;
@@ -131,6 +134,92 @@
   function goNextQ() { if (currentQi < QUESTIONS.length - 1) { currentQi++; renderQuiz(true); } else finish(); }
   function goPrevQ() { if (currentQi > 0) { currentQi--; renderQuiz(true); } }
 
+  function cityGroupsHtml(selected, term) {
+    const t = String(term || '').trim();
+    const list = t ? CITIES.filter(c => c.name.includes(t) || (c.label || '').includes(t)) : CITIES;
+    if (!list.length) return '<p class="city-empty">没找到这个城市，换个关键词试试</p>';
+    const groups = {};
+    list.forEach(c => { (groups[c.region] = groups[c.region] || []).push(c); });
+    return CITY_REGIONS.filter(r => groups[r] && groups[r].length).map(r => `
+      <div class="city-group">
+        <p class="city-group-h">${r}</p>
+        <div class="city-chips">
+          ${groups[r].map(c => `<button class="city-chip${selected.has(c.name) ? ' sel' : ''}" data-city="${c.name}" type="button"><span>${c.name}</span><em>${c.tier}</em></button>`).join('')}
+        </div>
+      </div>`).join('');
+  }
+
+  function renderCityQuestion(q, panel, qi) {
+    const draft = cityDraft[q.id] || (cityDraft[q.id] = new Set(answers[q.id] || []));
+    panel.innerHTML = `
+      <span class="q-tag">${q.tag} · 第 ${qi + 1} 问</span>
+      <h2 class="q-text">${q.text}</h2>
+      <p class="city-hint">${q.hint || '最多选 5 个城市；也可以选「不限城市」。'}<br /><span class="city-hint-sub">城市列表可上下滑动；切到别的区域继续选。</span></p>
+      <div class="city-toolbar">
+        <input id="city-search" class="city-search" type="search" placeholder="搜索城市，如 成都、佛山、义乌" autocomplete="off" />
+        <button id="city-unlimited" class="city-unlimited${draft.has('不限城市') ? ' sel' : ''}" type="button">不限城市</button>
+      </div>
+      <div class="city-selected" id="city-selected"></div>
+      <div class="city-groups" id="city-groups">${cityGroupsHtml(draft, '')}</div>
+      <div class="confirm-row"><button id="btn-city" class="btn btn-primary">确认城市（已选 ${draft.size}）</button></div>
+      ${qi > 0 ? '<button id="btn-prev-q" class="btn btn-ghost btn-prev">← 上一题</button>' : ''}`;
+
+    const selEl = panel.querySelector('#city-selected');
+    const groupsEl = panel.querySelector('#city-groups');
+    const btn = panel.querySelector('#btn-city');
+    const unlimited = panel.querySelector('#city-unlimited');
+    const search = panel.querySelector('#city-search');
+
+    const renderSelected = () => {
+      const names = [...draft];
+      selEl.innerHTML = names.length
+        ? `<span class="city-selected-h">已选 ${names.length} 个：</span>${names.map(n => `<button class="city-pill" data-remove="${n}" type="button">${n}<i>×</i></button>`).join('')}`
+        : '<span class="city-selected-empty">还没选城市；选 1–5 个，推荐会带上本地行业和薪资差异。</span>';
+      btn.textContent = `确认城市（已选 ${draft.size}）`;
+    };
+    const refreshGroups = () => {
+      const keep = groupsEl.scrollTop;
+      groupsEl.innerHTML = cityGroupsHtml(draft, search.value);
+      groupsEl.scrollTop = keep;
+    };
+    const toggle = name => {
+      if (name === '不限城市') {
+        draft.clear(); draft.add('不限城市');
+      } else {
+        draft.delete('不限城市');
+        if (draft.has(name)) draft.delete(name);
+        else if (draft.size >= 5) { toast('最多选 5 个城市'); return; }
+        else draft.add(name);
+      }
+      renderSelected();
+      refreshGroups();
+      unlimited.classList.toggle('sel', draft.has('不限城市'));
+    };
+
+    search.addEventListener('input', () => { groupsEl.scrollTop = 0; refreshGroups(); });
+    groupsEl.addEventListener('click', e => {
+      const b = e.target.closest('.city-chip'); if (!b) return;
+      toggle(b.dataset.city);
+    });
+    selEl.addEventListener('click', e => {
+      const b = e.target.closest('[data-remove]'); if (!b) return;
+      draft.delete(b.dataset.remove);
+      renderSelected(); refreshGroups();
+      unlimited.classList.toggle('sel', draft.has('不限城市'));
+    });
+    unlimited.addEventListener('click', () => toggle('不限城市'));
+    btn.addEventListener('click', () => {
+      if (!draft.size) { toast('至少选 1 个城市，或选「不限城市」'); return; }
+      answers[q.id] = [...draft];
+      delete cityDraft[q.id];
+      store.bumpTotal();
+      goNextQ();
+    });
+    const prev = panel.querySelector('#btn-prev-q');
+    if (prev) prev.addEventListener('click', goPrevQ);
+    renderSelected();
+  }
+
   function renderQuiz(animate = true) {
     if (currentQi >= QUESTIONS.length) { finish(); return; }
     const q = QUESTIONS[currentQi];
@@ -140,6 +229,8 @@
       d.className = (i < currentQi || (i === currentQi && answered(QUESTIONS[i]))) ? 'done' : (i === currentQi ? 'now' : '');
     });
     $('#quiz-stage').textContent = `第 ${currentQi + 1} / ${QUESTIONS.length} 弹`;
+
+    if (q.city) { renderCityQuestion(q, panel, currentQi); return; }
 
     const letters = 'ABCDEFGHIJKLMNO';
     if (q.multi) {
@@ -210,10 +301,11 @@
     const dims = {}, profile = {
       modes: [], risk: 0, floor: 0, hours: 1,
       ageBand: 2, eduRank: 2, industry: '其他', health: 2,
-      skills: [], pref: '坐班', cityTier: '不限', gender: '',
+      skills: [], pref: '坐班', cities: [], cityTier: '不限', cityNames: [], gender: '',
       stage: '', capital: 0, selfBiz: false,
     };
     QUESTIONS.forEach(q => {
+      if (q.city) { const arr = answers[q.id]; profile.cities = Array.isArray(arr) ? arr.slice() : []; return; }
       if (q.multi) { (answers[q.id] || []).forEach(i => { const o = q.opts[i]; if (o && o.add && o.add.sk && !profile.skills.includes(o.add.sk)) profile.skills.push(o.add.sk); }); return; }
       const o = q.opts[answers[q.id]]; if (!o) return;
       if (o.m) profile.modes.push(...o.m);
@@ -227,13 +319,21 @@
         if (o.add.industry) profile.industry = o.add.industry;
         if (typeof o.add.health === 'number') profile.health = o.add.health;
         if (o.add.pref) profile.pref = o.add.pref;
-        if (o.add.cityTier) profile.cityTier = o.add.cityTier;
         if (o.add.gender) profile.gender = o.add.gender;
         if (o.add.stage) profile.stage = o.add.stage;
         if (typeof o.add.capital === 'number') profile.capital = o.add.capital;
         if (typeof o.add.selfBiz === 'boolean') profile.selfBiz = o.add.selfBiz;
       }
     });
+
+    const selectedCities = (profile.cities || [])
+      .filter(n => n !== '不限城市')
+      .map(n => CITIES.find(c => c.name === n)).filter(Boolean);
+    profile.cityNames = selectedCities.length
+      ? selectedCities.map(c => c.name)
+      : ((profile.cities || []).includes('不限城市') ? ['不限城市'] : []);
+    const topTier = selectedCities.slice().sort((a, b) => (CITY_TIER_RANK[b.tier] || 1) - (CITY_TIER_RANK[a.tier] || 1))[0];
+    profile.cityTier = topTier ? topTier.tier : '不限';
 
     // ---- 六维归一化 ----
     const norm = {};
@@ -250,34 +350,54 @@
       { name: '重启紧迫度', pct: ({ mode_urgent: 88, mode_gap: 68, mode_in: 40, mode_blur: 55, mode_fresh: 72 })[profile.modes[0]] ?? 50 },
     ];
 
-    // ---- 硬过滤 ----
-    const lowSalOf = c => parseFloat(c.sal.split(/[-–]/)[0].replace(/[^\d.]/g, '')) * 1000;
-    const pool = ACTIONS.filter(c => c.arc === archetypeId);
-    const passPattern = c => !(profile.pref === '坐班' && c.req.pat === '倒班') && !(profile.pref === '弹性' && c.req.pat === '倒班');
+    // ---- 硬过滤：学历 / 健康；收入与形态改为软惩罚，保证三维度都有候选 ----
+    const pool = JOBS.filter(c => (c.arcs[archetypeId] || 0) > 0);
     const passEdu = c => profile.eduRank >= c.req.edu;
     const passHealth = c => !((profile.health >= 3 && c.req.phys) || (profile.health === 4 && c.req.pat === '倒班'));
-    const passFloor = c => { if (lowSalOf(c) >= profile.floor) return true; return c.mkt.g >= 30 || (c.mkt.shortage && profile.risk >= 0); };
-    const skillHit = cs => profile.skills.filter(s => cs.includes(s)).length;
-    const passHours = c => { const cs = c.req.skills || []; return !(profile.hours === 2 && c.req.edu >= 3 && c.req.pat === '坐班' && skillHit(cs) < Math.ceil(cs.length / 2)); };
+    let cand = pool.filter(c => passEdu(c) && passHealth(c));
+    if (cand.length < 3) cand = pool.filter(passHealth);
+    if (cand.length < 3) cand = pool.slice();
 
-    let cand = pool.filter(c => passPattern(c) && passEdu(c) && passHealth(c) && passFloor(c) && passHours(c));
-    if (cand.length < 3) {
-      // 保留最重要的人身与收入约束，放宽形态/学历/时间，保证 TOP3 完整
-      const relaxed = pool.filter(c => passHealth(c) && passFloor(c));
-      cand = [...new Set([...cand, ...relaxed])];
-      if (cand.length < 3) cand = pool.slice();
-    }
-
-    // ---- 五维软打分 ----
     const userVec = {}; AXES.forEach(a => userVec[a.key] = norm[a.key]);
     const cosSim = (v1, v2) => { let dot = 0, n1 = 0, n2 = 0; for (const k in v1) { dot += v1[k] * (v2[k] || 0); n1 += v1[k] ** 2; n2 += (v2[k] || 0) ** 2; } return n1 && n2 ? dot / (Math.sqrt(n1) * Math.sqrt(n2)) : 0; };
     const hitN = cs => profile.skills.filter(s => cs.includes(s)).length;
 
+    const resolveL4 = c => {
+      let bestCity = null, bestScore = -1;
+      selectedCities.forEach(ct => {
+        const match = (c.tr || []).reduce((m, [ind, w]) => m + ((ct.industries || []).includes(ind) ? w : 0), 0);
+        const s = match * 12 + (CITY_TIER_RANK[ct.tier] || 1) * 2;
+        if (s > bestScore) { bestScore = s; bestCity = ct; }
+      });
+      const tier = bestCity ? bestCity.tier : '新一线';
+      const rank = CITY_TIER_RANK[tier] || 3;
+      const mult = CITY_TIER_SALARY[tier] || 0.95;
+      const org = c.orgs[rank >= 3 ? 0 : rank === 2 ? 1 : 2] || c.orgs[0] || '本地企业';
+      const cityLabel = bestCity
+        ? `${bestCity.name}${profile.cityNames.length > 1 ? ' 优先' : ''}`
+        : '全国机会';
+      const lo = Math.max(1, Math.round(c.salRange[0] * mult * 2) / 2);
+      const hi = Math.max(lo + 1, Math.round(c.salRange[1] * mult * 2) / 2);
+      return { bestCity, tier, rank, mult, org, cityLabel, salRange: [lo, hi], salText: `${lo}–${hi}k`, title: `${cityLabel} · ${org} · ${c.name}` };
+    };
+
+    const cityFitOf = c => {
+      if (!selectedCities.length) return 55;
+      let best = 0;
+      selectedCities.forEach(ct => {
+        const match = (c.tr || []).reduce((m, [ind, w]) => m + ((ct.industries || []).includes(ind) ? w : 0), 0);
+        const s = 38 + Math.min(45, match * 24) + (CITY_TIER_RANK[ct.tier] || 1) * 3;
+        if (s > best) best = s;
+      });
+      return Math.min(100, Math.round(best));
+    };
+
     const scored = cand.map(c => {
-      const cs = c.req.skills || [];
+      const cs = c.skills || [];
+      const hitList = cs.filter(s => profile.skills.includes(s));
       const f1 = !cs.length ? 50 : (profile.skills.length
         ? Math.round(hitN(cs) / (new Set([...cs, ...profile.skills])).size * 100)
-        : 40); // 零经验：不做“技能空白”惩罚
+        : 40);
       const t = (c.tr || []).find(([ind]) => ind === profile.industry);
       const f2 = freshLike ? 50 : Math.round((t ? t[1] : 0.35) * 100);
       const cv = {}; cs.forEach(s => { const ax = SKILL_AXIS[s]; if (ax) Object.entries(ax).forEach(([k, v]) => (cv[k] = (cv[k] || 0) + v)); });
@@ -285,52 +405,122 @@
       let f4 = Math.log(1 + c.mkt.g) / Math.log(61) * 60;
       if (c.mkt.c < 20) f4 += 20; if (c.mkt.c > 150) f4 -= 25; if (c.mkt.shortage) f4 += 10;
       f4 = Math.round(Math.max(0, Math.min(90, f4)) / 90 * 100);
-      const weeks = 4 + (cs.length - hitN(cs)) * 6 + Math.max(0, c.req.edu - profile.eduRank) * 6;
+      const weeks = 4 + (cs.length - hitN(cs)) * 5 + Math.max(0, c.req.edu - profile.eduRank) * 6;
       const cap = profile.hours === 0 ? 95 : profile.hours === 1 ? 72 : 45;
       const f5 = Math.round(cap * Math.exp(-weeks / 18));
-      // 自营倾向 / 启动资金 / 零经验入行友好度，作为排序修正项
-      const selfBonus = (profile.selfBiz && c.self) ? 6 : 0;
-      const capGap = (profile.selfBiz && c.self && Number.isFinite(c.cap)) ? Math.max(0, c.cap - profile.capital) : 0;
-      const capPenalty = capGap ? -5 * capGap : 0;
-      const entryBonus = (freshLike && c.entry) ? 5 : 0;
-      const _rawScore = Math.round(f1 * .30 + f2 * .20 + f3 * .15 + f4 * .20 + f5 * .15 + selfBonus + capPenalty + entryBonus);
-      return { rank: 0, ...c, _rawScore, scoreNum: _rawScore, fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5 }, gapSkills: cs.filter(s => !profile.skills.includes(s)) };
-    }).sort((a, b) => b._rawScore - a._rawScore);
+      const cityFit = cityFitOf(c);
+      const arcFit = Math.min(100, Math.round((c.arcs[archetypeId] || 0) * 10));
+      const base = Math.round(f1 * .26 + f2 * .16 + f3 * .14 + f4 * .18 + f5 * .10 + cityFit * .08 + arcFit * .08);
+      const l4 = resolveL4(c);
+      const salLo = l4.salRange[0], salHi = l4.salRange[1];
+      const floorK = profile.floor / 1000;
+      const underFloor = profile.floor > 0 && salLo < floorK;
+      const capGap = (profile.selfBiz && c.self && c.cap) ? Math.max(0, c.cap - profile.capital) : 0;
+      let patternPenalty = 0;
+      if (profile.pref === '坐班' && c.req.pat === '倒班') patternPenalty -= 8;
+      if (profile.pref === '弹性' && c.req.pat === '倒班') patternPenalty -= 4;
+      if (profile.pref === '倒班') patternPenalty += 2;
+      let agePenalty = 0;
+      if (profile.ageBand >= 4 && (c.req.phys || c.req.pat === '倒班')) agePenalty -= 4;
+      if (profile.ageBand >= 5 && c.req.phys) agePenalty -= 4;
 
-    const raws = scored.map(c => c._rawScore);
-    const rawHi = Math.max(...raws), rawLo = Math.min(...raws);
+      const steady = Math.round(base * .50 + c.tracks.steady * 10 * .25
+        + (c.entry ? 3 : 0) + (c.mkt.shortage ? 4 : 0)
+        + (c.req.pat === profile.pref ? 3 : 0)
+        + (underFloor ? -6 : 2) + patternPenalty + agePenalty);
+      const growth = Math.round(base * .42 + c.tracks.growth * 10 * .30
+        + f2 * .10 + f5 * .08 + (c.mkt.g >= 25 ? 3 : 0)
+        + (c.promote ? 3 : 0) + patternPenalty + agePenalty);
+      const ceiling = Math.round(base * .38 + c.tracks.ceiling * 10 * .32
+        + Math.min(10, salHi / 2.5) * 10 * .20 + (c.self ? 4 : 0)
+        + (c.mkt.g >= 25 ? 2 : 0) + (underFloor ? 0 : 1)
+        + (l4.rank >= 3 ? 1 : 0) - capGap * 6 + patternPenalty + agePenalty);
 
-    // 五项适配因子：按本岗位内部强弱排序，映射到 81–98 的高分区间，保证互不相同
-    const factorLadder = [98, 94, 90, 86, 84];
-    const rankShift = [2, 0, -2];
-    scored.forEach((c, i) => {
-      const rawFb = { ...c.fb };
-      const order = Object.entries(rawFb).sort((a, b) => b[1] - a[1]);
-      const rawPct = rawHi === rawLo ? 0.5 : (c._rawScore - rawLo) / (rawHi - rawLo);
-      const shift = (rankShift[i] ?? -2) + (rawPct >= 0.5 ? 1 : 0);
-      order.forEach(([k], idx) => {
-        c.fb[k] = Math.max(81, Math.min(98, (factorLadder[idx] ?? 84) + shift));
-      });
+      return {
+        ...c,
+        _base: base,
+        _dim: { steady, growth, ceiling },
+        metrics: { f1, f2, f3, f4, f5, cityFit, arcFit, base, weeks, underFloor, salLo, salHi, hitList, l4, capGap, patternPenalty },
+        l4Title: l4.title, cityLabel: l4.cityLabel, org: l4.org,
+        salRange: l4.salRange, sal: l4.salText,
+        scoreNum: Math.max(55, Math.min(98, base)),
+        fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5, 城市匹配: cityFit, 原型契合: arcFit },
+        gapSkills: cs.filter(s => !profile.skills.includes(s)),
+        alternatives: [],
+      };
+    }).sort((a, b) => b._base - a._base);
+
+    const buildRoute = (c, def) => {
+      const m = c.metrics;
+      const reasons = [];
+      if (def.key === 'steady') reasons.push(`门槛 ${EDU_LABEL[c.req.edu] || ''}、${c.req.pat}，约 ${m.weeks} 周能上手，适合先站稳`);
+      if (def.key === 'growth') reasons.push(`往上可走到「${c.promote}」，技能会越做越值钱`);
+      if (def.key === 'ceiling') reasons.push(`上限约 ${m.salHi}k${c.self ? `，也能自己干（${c.selfBiz}）` : ''}`);
+      if (m.hitList.length) reasons.push(`你勾的「${m.hitList.map(skillLabel).join('、')}」能直接用上`);
+      if (m.arcFit >= 70) reasons.push(`这个岗位和你的「${arc.cn}」画像贴合度较高`);
+      if (!freshLike && m.f2 >= 50) reasons.push(`你之前的「${profile.industry}」经历可以迁移`);
+      if (m.cityFit >= 68) {
+        const localLabel = m.l4.bestCity && m.l4.bestCity.label ? m.l4.bestCity.label : '本地产业';
+        const bestName = m.l4.bestCity ? m.l4.bestCity.name : profile.cityNames[0];
+        reasons.push(`你选的「${bestName}」里，${localLabel}更集中，这类岗位更好找`);
+      }
+      if (c.mkt.shortage) reasons.push('这个岗位目前偏缺工，入行窗口比红海岗位大');
+      else if (c.mkt.g >= 25) reasons.push(`行业还在增长（约 ${c.mkt.g}%），不是夕阳岗`);
+      if (m.underFloor) reasons.push(`本地起薪 ${m.salLo}k 低于你的收入底线，适合当过渡或跳板`);
+      else if (profile.floor > 0) reasons.push(`本地起薪 ${m.salLo}k，覆盖你设的收入底线`);
+      const uniq = [...new Set(reasons)].slice(0, 3);
+
+      let caveat = '';
+      if (m.capGap > 0) caveat = `自营启动资金约需 ${c.cap} 档，你目前预算还差一截；先打工学流程更稳。`;
+      else if (m.patternPenalty < 0) caveat = `这个岗位和你偏好的「${profile.pref}」不完全一致，入职前先确认班次。`;
+      else if (m.underFloor) caveat = `收入低于你的底线，建议只作为过渡，不要长期停留。`;
+
+      c.routeKey = def.key; c.routeLabel = def.label; c.routeSub = def.sub; c.routeIcon = def.icon;
+      c.reasons = uniq; c.caveat = caveat;
+      const range = dimRange[def.key];
+      const pct = range.max === range.min ? 1 : (c._dim[def.key] - range.min) / (range.max - range.min);
+      c.scoreNum = Math.round(74 + pct * 22);
+      return { key: def.key, label: def.label, sub: def.sub, icon: def.icon, job: c, reasons: uniq, caveat };
+    };
+
+    const dimRange = {};
+    ['steady', 'growth', 'ceiling'].forEach(k => {
+      const vals = scored.map(x => x._dim[k]);
+      dimRange[k] = { min: Math.min(...vals), max: Math.max(...vals) };
     });
 
-    // 展示分：统一映射到 80+ 区间，并按名次拉开差异（前三档不重叠）
-    const baseByRank = [96, 90, 85];
-    scored.forEach((c, i) => {
-      const spread = rawHi === rawLo
-        ? 1 - Math.min(1, i / Math.max(1, scored.length - 1))
-        : (c._rawScore - rawLo) / (rawHi - rawLo);
-      const base = baseByRank[i] ?? 82;
-      const adj = Math.round((spread - 0.5) * 4);
-      c.scoreNum = Math.max(80, Math.min(98, base + adj));
+    const dimDefs = [
+      { key: 'steady', label: '稳健路线', sub: '先站稳，现金流为正', icon: '🛡' },
+      { key: 'growth', label: '成长路线', sub: '能积累，越做越值钱', icon: '📈' },
+      { key: 'ceiling', label: '上限路线', sub: '看天花板，高薪或自营', icon: '🚀' },
+    ];
+    const usedIds = new Set(), usedL2 = new Set();
+    const routes = dimDefs.map(def => {
+      const ordered = [...scored].sort((a, b) => b._dim[def.key] - a._dim[def.key]);
+      const pick = ordered.find(c => !usedIds.has(c.id) && !usedL2.has(c.l2))
+        || ordered.find(c => !usedIds.has(c.id))
+        || ordered[0];
+      usedIds.add(pick.id); usedL2.add(pick.l2);
+      return buildRoute(pick, def);
     });
-    scored.slice(0, 3).forEach((c, i) => (c.rank = '#' + (i + 1)));
+    routes.forEach(r => {
+      r.job.alternatives = scored
+        .filter(x => x.l2 === r.job.l2 && x.id !== r.job.id)
+        .slice(0, 3)
+        .map(x => ({ name: x.name, sal: x.sal }));
+    });
 
     const notes = [];
     if (freshLike) notes.push('先选能快速上手的入口');
     else if (profile.stage === 'gap') notes.push('空窗期用学习或作品补叙事');
     if (profile.risk <= -1) notes.push('低风险路线优先'); else if (profile.floor >= 18000) notes.push('收入硬线优先于兴趣');
+    if (selectedCities.length) notes.push(`按 ${profile.cityNames.slice(0, 2).join('/')} 的薪资与产业修正`);
 
-    return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), gender: profile.gender, profile, top3: scored.slice(0, 3), ts: Date.now() };
+    return {
+      archetype: archetypeId, arc, dims, norm, chips,
+      context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''),
+      gender: profile.gender, profile, routes, top3: routes.map(r => r.job), ts: Date.now(),
+    };
   }
 
   /* ---------- 分析屏 ---------- */
@@ -497,10 +687,9 @@
     document.documentElement.style.setProperty('--deep', colors.deep);
     document.documentElement.style.setProperty('--glow', colors.glow);
     store.saveLast(r);
-    const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
     const avatarFile = arc.avatarF.replace(/-f\.webp$/, r.gender === '男' ? '-m.webp' : '-f.webp');
     const unlocked = store.isUnlocked();
-    track('result_view', { archetype: r.archetype, top1: (r.top3 && r.top3[0] && r.top3[0].name) || '' });
+    track('result_view', { archetype: r.archetype, top1: (r.routes && r.routes[0] && r.routes[0].job.name) || '' });
 
     $('#res-body').innerHTML = `
       <p class="res-context">为「${r.context}」的你校准</p>
@@ -529,27 +718,42 @@
       </div>
 
       <div class="panel">
-        <div class="panel-h"><h3>方向行动 TOP3</h3><span>FIT ROADMAP</span></div>
-        ${r.top3.map(c => `
-          <div class="career-card">
+        <div class="panel-h"><h3>三条路线</h3><span>WHY THESE THREE</span></div>
+        <p class="route-lead">不是按分数取前三，而是分别回答三个问题：先站稳、能积累、看上限。每张卡都写清为什么给你。</p>
+        ${r.routes.map(route => {
+          const c = route.job;
+          const badges = c.badges || [];
+          const dots = Math.max(0, Math.min(5, Math.round((c.scoreNum || 0) / 20)));
+          return `
+          <div class="career-card route-card route-${route.key}">
             <div class="career-top">
-              <span class="career-rank">${c.rank}</span>
-              <span class="career-name">${c.name}</span>
+              <span class="route-badge"><i>${route.icon}</i>${route.label}</span>
+              <span class="career-name">${c.l4Title}</span>
             </div>
+            <p class="route-sub">${route.sub}</p>
+            <p class="route-taxonomy">行业：${c.l2} · ${c.l1Name}</p>
             <div class="career-meta">
-              <span class="career-badges">${c.S ? '<i class="badge-official s">国家新职业</i>' : ''}${c.L ? '<i class="badge-official l">绿色职业</i>' : ''}</span>
+              <span class="career-badges">${badges.includes('S') ? '<i class="badge-official s">国家新职业</i>' : ''}${badges.includes('L') ? '<i class="badge-official l">绿色职业</i>' : ''}</span>
               <span class="career-sal">${c.sal}/月</span>
             </div>
-            <p class="career-fit">适配度 <b>${c.scoreNum}</b><span class="dim-dots">${'●'.repeat(Math.round(c.scoreNum / 20))}${'○'.repeat(5 - Math.round(c.scoreNum / 20))}</span></p>
+            <p class="career-fit">${c.routeLabel.replace('路线', '指数')} <b>${c.scoreNum}</b><span class="dim-dots">${'●'.repeat(dots)}${'○'.repeat(5 - dots)}</span><small>${c.req.pat} · ${c.cityLabel}</small></p>
+            <div class="route-why">
+              <b>为什么推荐给你</b>
+              <ul>${route.reasons.map(x => `<li>${x}</li>`).join('')}</ul>
+            </div>
+            <p class="route-tasks"><em>日常核心：</em>${(c.tasks || []).slice(0, 4).join(' · ')}</p>
             <div class="action-paths">
               <div class="action-path"><b>🏢 求职路径</b>${c.J}</div>
               <div class="action-path"><b>🌱 自由事业</b>${c.F}</div>
-              <div class="action-path"><b>📚 学习路线</b>${c.L}</div>
+              <div class="action-path"><b>📚 学习路线</b>${c.learn}</div>
             </div>
             <div class="tags">${(c.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}</div>
             ${c.gapSkills.length ? `<p class="career-gap">补上这几块就能平移过去：<b>${c.gapSkills.map(skillLabel).join('、')}</b></p>` : `<p class="career-gap done">关键手艺你已经齐了，直接上。</p>`}
+            ${route.caveat ? `<p class="route-caveat">注意：${route.caveat}</p>` : ''}
             <p class="career-week"><em>本周就能做：</em>${c.week1}</p>
-          </div>`).join('')}
+            ${c.alternatives && c.alternatives.length ? `<p class="route-alt">同族还可以看：${c.alternatives.map(a => `<span>${a.name}<em>${a.sal}</em></span>`).join('')}</p>` : ''}
+          </div>`;
+        }).join('')}
       </div>
 
       ${unlocked ? '' : `
@@ -560,7 +764,7 @@
             <h3>找准了方向，距离成功就只差一份深度报告。</h3>
             <ul class="teaser-list">
               <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
-              <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
+              <li><b>往哪走</b>三条路线（稳健 / 成长 / 上限）的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
               <li><b>怎么讲</b>经历改写示例 + 面试高频问题，把你的经历讲成优势。</li>
               <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
             </ul>
@@ -715,7 +919,7 @@
         <h3>解锁深度报告 <span class="unlock-price" data-price>${priceLabel(payPrice)}</span></h3>
         <ul class="unlock-includes">
           <li>三段式人格深读 + 六维逐项拆解</li>
-          <li>TOP3 方向的 12 周落地路线</li>
+          <li>三条路线（稳健 / 成长 / 上限）的 12 周落地路线</li>
           <li>简历改写示例 + 面试高频问题</li>
           <li>本周 / 本月 / 下月三件事</li>
         </ul>
@@ -983,7 +1187,7 @@
     const btn = $('#report-card-save');
     const label = '保存完整报告图片';
     if (btn) { btn.disabled = true; btn.textContent = '正在生成…'; }
-    showBusy('正在生成完整报告图片… 包含摘要、六维、TOP3 与 12 周路线');
+    showBusy('正在生成完整报告图片… 包含摘要、六维、三条路线与 12 周路线');
     let hideEls = [], prevDisplay = [];
     let restoreImgs = null, avatarEl = null, avatarPrev = null, skelEl = null, skelDisplay = '';
     let avatarBox = null, avatarSrc = '';
@@ -1172,7 +1376,7 @@
 
   /* ---------- 重测 ---------- */
   function restart() { clearTimeout(computingTimer); answers = {}; purgeDrafts(); result = null; currentQi = 0; track('quiz_restart'); go('quiz'); renderQuiz(false); }
-  function purgeDrafts() { for (const k in multiDraft) delete multiDraft[k]; }
+  function purgeDrafts() { for (const k in multiDraft) delete multiDraft[k]; for (const k in cityDraft) delete cityDraft[k]; }
 
   /* ---------- 事件绑定 ---------- */
   $('#btn-start').addEventListener('click', () => { track('quiz_start'); currentQi = 0; go('quiz'); renderQuiz(false); });

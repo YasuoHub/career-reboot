@@ -18,8 +18,11 @@ const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, CLASSIFY_DIM } = window.RB_DATA;
 
 function detect(a) {
   const d = {};
-  QUESTIONS.forEach(q => { const o = q.opts[a[q.id]]; if (!o) return;
-    if (o.add && o.add.dims) Object.entries(o.add.dims).forEach(([k, v]) => (d[k] = (d[k] || 0) + v)); });
+  QUESTIONS.forEach(q => {
+    if (q.city) return;
+    const o = q.opts[a[q.id]]; if (!o) return;
+    if (o.add && o.add.dims) Object.entries(o.add.dims).forEach(([k, v]) => (d[k] = (d[k] || 0) + v));
+  });
   const n = {}; AXES.forEach(x => n[x.key] = Math.round(((d[x.key] || 0) / AXES_MAX[x.key]) * 100));
   // 16型 classify 四组二值判别
   const ext = CLASSIFY_DIM.D1_ext(n);
@@ -84,7 +87,11 @@ const patterns = [
     await page.click('#btn-start');
     for (let i = 0; i < QUESTIONS.length; i++) {
       const q = QUESTIONS[i];
-      if (q.multi) {
+      if (q.city) {
+        await page.waitForSelector('#city-search', { timeout: 5000 });
+        await page.locator('.city-chip').first().click();
+        await page.click('#btn-city');
+      } else if (q.multi) {
         // 多选：勾第一个选项后确认
         await page.waitForSelector('.multi-opts .opt-chip >> nth=0', { timeout: 5000 });
         await page.locator('.multi-opts .opt-chip').first().click();
