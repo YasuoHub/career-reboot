@@ -768,7 +768,7 @@
     if (!el) return;
     if (result.aiSummary) {
       el.textContent = result.aiSummary;
-      if (note) note.textContent = 'AI 生成 · 仅供参考';
+      if (note) note.textContent = '基于您的作答智能生成';
       return;
     }
     try {
@@ -787,7 +787,7 @@
       if (d.summary) {
         result.aiSummary = d.summary;
         el.textContent = d.summary;
-        if (note) note.textContent = 'AI 生成 · 仅供参考';
+        if (note) note.textContent = '基于您的作答智能生成';
         track('ai_summary_ok');
       }
     } catch (_) { /* 静默降级为本地摘要 */ }

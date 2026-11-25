@@ -321,7 +321,7 @@
       <section class="rep-sec rep-ai">
         <div class="rep-sec-h"><span>00</span><h2>你的重启摘要</h2><em>SUMMARY</em></div>
         <p class="rep-ai-text" id="rep-ai-text">${esc(localSummary(r))}</p>
-        <p class="rep-ai-note" id="rep-ai-note">基于你的作答本地生成</p>
+        <p class="rep-ai-note" id="rep-ai-note">基于您的作答智能生成</p>
       </section>
       ${sec1}
       ${sec2}
