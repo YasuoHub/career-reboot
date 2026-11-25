@@ -62,6 +62,8 @@ export default async function handler(req, res) {
   const payload = { archetype, norm, top3, context };
   const base = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
   const model = (process.env.AI_MODEL || 'gpt-4o-mini').trim();
+  // DeepSeek 新模型默认可能开启思考模式，会占用 max_tokens；摘要场景明确关闭
+  const isDeepSeek = /deepseek\.com/i.test(base);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
@@ -76,6 +78,7 @@ export default async function handler(req, res) {
         model,
         temperature: 0.7,
         max_tokens: 420,
+        ...(isDeepSeek ? { thinking: { type: 'disabled' } } : {}),
         messages: [
           {
             role: 'system',
