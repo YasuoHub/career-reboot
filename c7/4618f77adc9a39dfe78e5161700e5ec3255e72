@@ -1,0 +1,29 @@
+css/style.css
+  s_88739e2e3fe509::t_fadcc493adf669 576-584
+docs/分享验证方案.md
+  s_88739e2e3fe509::t_e5502447ac9552 4
+docs/支付与变现现状.md
+  s_88739e2e3fe509::t_34450d4d1ecf14 34,87
+js/app.js
+  s_88739e2e3fe509::t_9091b50e91e33b 366-369,376,378,405-416,419-431,550,552,554-557,615-617,619-640
+js/poster.js
+  s_88739e2e3fe509::t_6ffe1c76fbe797 489,492,497,499-512
+lib/invite.js
+  s_88739e2e3fe509::t_39a2df85141504 13-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c74618f77adc9a39dfe78e5161700e5ec3255e72",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
