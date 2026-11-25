@@ -1,0 +1,19 @@
+docs/支付与变现现状.md
+  s_88739e2e3fe509::t_c1bf919ca29b0d 56-57,60-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "e7e18c4d3d4e00c1faf161e74d31e03c634f035a",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
