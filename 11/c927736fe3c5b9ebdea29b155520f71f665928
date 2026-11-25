@@ -1,0 +1,29 @@
+index.html
+  s_88739e2e3fe509::t_741ad845dfdfba 125
+js/app.js
+  s_96e655de734f1f::t_862626181e41e2 300-312
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "11c927736fe3c5b9ebdea29b155520f71f665928",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    },
+    "s_96e655de734f1f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-acompact-4aa343e2d0b712ce",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
