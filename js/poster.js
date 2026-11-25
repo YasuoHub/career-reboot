@@ -486,16 +486,30 @@ const RB_Poster = (() => {
 
   /* ---------- 分享动作 ---------- */
   async function share(title, text) {
+    const full = text || location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url: location.href });
+        await navigator.share({ title, text: full, url: location.href.split('#')[0] });
         return true;
       }
     } catch (_) { /* 用户取消，忽略 */ }
     try {
-      await navigator.clipboard.writeText(location.href);
+      await navigator.clipboard.writeText(full);
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = full;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select(); ta.setSelectionRange(0, full.length);
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch (_) { return false; }
+    }
   }
 
   return { drawRadar, confetti, buildShare, buildReportCard, share, loadQR, loadImg };

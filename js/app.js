@@ -363,15 +363,19 @@
 
   /* ---------- 邀请裂变 ---------- */
   function inviteLink() {
-    return `${location.origin}/?ref=${encodeURIComponent(uid)}`;
+    const origin = (location.origin && location.origin !== 'null')
+      ? location.origin
+      : 'https://www.career-turn.icu';
+    return `${origin}/?ref=${encodeURIComponent(uid)}`;
   }
 
   function updateInviteUI(d) {
     const card = $('#invite-card');
     if (!card) return;
     card.hidden = false;
-    const need = Number(d.need) || 3;
+    const need = Number(d.need) || 1;
     const progress = Math.min(need, Number(d.progress) || 0);
+    document.querySelectorAll('[data-invite-need]').forEach(el => { el.textContent = String(need); });
     const fill = $('#invite-bar-fill');
     if (fill) fill.style.width = `${Math.round(progress / need * 100)}%`;
     const label = $('#invite-progress');
@@ -398,13 +402,34 @@
 
   async function shareInvite() {
     const url = inviteLink();
-    const text = `我在「重启人格图鉴」测出了「${result?.arc?.cn || '我的重启人格'}」，你也来测测，顺便帮我解锁深度报告👉`;
+    const lead = `我在「重启人格图鉴」测出了「${result?.arc?.cn || '我的重启人格'}」，你也来测测，顺便帮我解锁深度报告👉`;
+    const fullText = `${lead} ${url}`;
+
+    // 先把链接展示出来：即使剪贴板权限被拒，也能长按手动复制
+    const row = $('#invite-link-row');
+    const input = $('#invite-link');
+    if (row && input) {
+      row.hidden = false;
+      input.value = url;
+      try { input.focus(); input.select(); } catch (_) {}
+    }
+
     track('invite_share');
     if (navigator.share) {
-      try { await navigator.share({ title: '重启人格图鉴', text, url }); return; } catch (_) { /* 用户取消 */ }
+      try {
+        await navigator.share({ title: '重启人格图鉴', text: fullText, url });
+        return;
+      } catch (_) { /* 用户取消或系统分享不可用，回落复制 */ }
     }
-    const ok = await copyText(url);
-    toast(ok ? '邀请链接已复制，发给 3 位好友即可' : '复制失败，请手动复制地址栏');
+    const ok = await copyText(fullText);
+    if (ok) {
+      toast('邀请链接已复制，发给好友即可');
+    } else {
+      if (input) {
+        try { input.focus(); input.select(); } catch (_) {}
+      }
+      toast('已生成邀请链接，请长按上方链接手动复制');
+    }
   }
 
   async function claimReferral(archetype) {
@@ -522,10 +547,14 @@
       ${unlocked ? '' : `
       <div class="invite-card" id="invite-card" hidden>
         <div class="invite-head"><span>免费解锁</span><em>INVITE &amp; UNLOCK</em></div>
-        <p class="invite-copy">不想付费？邀请 <b>3</b> 位好友完成测评，也能免费解锁这份深度报告。</p>
+        <p class="invite-copy">不想付费？邀请 <b data-invite-need>1</b> 位好友完成测评，也能免费解锁这份深度报告。</p>
         <div class="invite-bar"><i id="invite-bar-fill"></i></div>
-        <p class="invite-progress" id="invite-progress">当前进度 0 / 3</p>
+        <p class="invite-progress" id="invite-progress">当前进度 0 / <span data-invite-need>1</span></p>
         <button class="btn btn-ghost invite-btn" id="btn-invite" type="button">生成邀请链接</button>
+        <div class="invite-link-row" id="invite-link-row" hidden>
+          <input id="invite-link" class="invite-link" type="text" readonly aria-label="邀请链接" />
+          <span class="invite-link-hint">长按链接可手动复制</span>
+        </div>
       </div>`}
       <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />作答与报告默认仅保存在本机；邀请功能仅同步匿名标识与人格类型代号。薪资与供需为公开报告量级参考。<br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a></p>
     `;
@@ -583,17 +612,33 @@
     return overlay;
   }
 
-  function copyText(text) {
+  async function copyText(text) {
+    const value = String(text || '');
+    if (!value) return false;
     if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (_) { /* 权限被拒或非用户手势，继续走 textarea 兜底 */ }
     }
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    let ok = false;
-    try { ok = document.execCommand('copy'); } catch (_) {}
-    ta.remove();
-    return Promise.resolve(ok);
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, value.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+      return ok;
+    } catch (_) {
+      return false;
+    }
   }
 
   function showWechatTip() {
