@@ -20,10 +20,11 @@ const QUESTIONS = [
     tag: '现状',
     text: '先同步一下你的状态：眼下这段日子，你更像——',
     opts: [
-      { t: '刚从裁员名单下来，正在四处看机会', m: ['mode_urgent'] },
-      { t: '主动跳出坑位，想换个跑道试试', m: ['mode_gap'] },
-      { t: '班还在上，但心已经提前递了辞呈', m: ['mode_in'] },
-      { t: '说不上裁员转行，就是心里那根弦松了', m: ['mode_blur'] },
+      { t: '刚毕业 / 还没正式工作过，正在找出路', m: ['mode_fresh'], add: { stage: 'fresh' } },
+      { t: '空窗半年以上，想重新回到职场', m: ['mode_gap'], add: { stage: 'gap' } },
+      { t: '刚被裁 / 刚裸辞，最近正在找机会', m: ['mode_urgent'], add: { stage: 'recent' } },
+      { t: '班还在上，但已经在偷偷看机会', m: ['mode_in'], add: { stage: 'in' } },
+      { t: '说不上具体原因，就是不想再这样下去', m: ['mode_blur'], add: { stage: 'blur' } },
     ],
   },
   {
@@ -31,22 +32,22 @@ const QUESTIONS = [
     tag: '现状',
     text: '重启之前得先谈钱，这一步躲不开：你的经济容错空间大概是——',
     opts: [
-      { t: '一个人吃饱全家不饿，试错随便来', add: { risk: 2 } },
-      { t: '有房租有存款，还能撑个半年一年', add: { risk: 1 } },
-      { t: '有账单压着，容错大概只剩两三个月', add: { risk: 0 } },
-      { t: '家里全指望这份收入，一分都不能少', add: { risk: -1 } },
+      { t: '刚毕业或单身，暂时没养家压力，试错空间大', add: { risk: 2 } },
+      { t: '有点存款，能撑半年到一年', add: { risk: 1 } },
+      { t: '有账单压着，最多撑两三个月', add: { risk: 0 } },
+      { t: '家里主要靠我，收入不能断', add: { risk: -1 } },
     ],
   },
   {
     id: 'q3',
     tag: '能力',
-    text: '过去几年，同事最常拉你帮忙解决的是哪类事？',
+    text: '身边人最常找你搭把手的是哪类事？',
     opts: [
-      { t: '数据表格一团糟，让我帮着理清楚', add: { dims: { analytic: 3 } } },
-      { t: '新东西不会用，直接教我一下', add: { dims: { leader: 2, stable: 1 } } },
-      { t: '方案写得太死板，帮我加点灵气', add: { dims: { creative: 3 } } },
-      { t: '事情堆成山，帮我把节奏捋顺', add: { dims: { maker: 2, leader: 1 } } },
-      { t: '情绪和关系出了状况，找我聊聊就好', add: { dims: { social: 3 } } },
+      { t: '理账、整表格、查数据，帮我把数字弄明白', add: { dims: { analytic: 3, social: 2, leader: 2, stable: 1 } } },
+      { t: '教我用新东西、做攻略，带我上手', add: { dims: { leader: 2, stable: 1 } } },
+      { t: '出点子、写文案、做图剪视频，帮我加点灵气', add: { dims: { creative: 3, social: 2, leader: 1, stable: 1 } } },
+      { t: '把活动张罗起来、把事推进下去', add: { dims: { maker: 2, leader: 1, social: 1 } } },
+      { t: '听我吐槽、帮我协调关系、照顾人', add: { dims: { social: 3 } } },
     ],
   },
   {
@@ -54,9 +55,9 @@ const QUESTIONS = [
     tag: '节奏',
     text: '下班后或周末，精力允许时你的默认动作是——',
     opts: [
-      { t: '研究一件没弄明白的事，直到搞清楚为止', add: { dims: { analytic: 2 } } },
-      { t: '刷内容、看别人的作品，边看边琢磨标杆在哪', add: { dims: { creative: 2, analytic: 1 } } },
-      { t: '修个东西、做个小手工，折腾看得见摸得着的东西', add: { dims: { maker: 3 } } },
+      { t: '研究一件没弄明白的事，直到搞清楚为止', add: { dims: { analytic: 2, social: 1, leader: 1 } } },
+      { t: '刷内容、看别人的作品，边看边琢磨标杆在哪', add: { dims: { creative: 2, analytic: 1, social: 1 } } },
+      { t: '修东西、做吃的、做手工，折腾看得见摸得着的东西', add: { dims: { maker: 3 } } },
       { t: '约人出来走走，边走边聊，顺便把事聊明白了', add: { dims: { social: 2, maker: 1 } } },
     ],
   },
@@ -65,9 +66,10 @@ const QUESTIONS = [
     tag: '未来',
     text: '重启的头三个月，你最想把时间砸在——',
     opts: [
-      { t: '搞懂一门能写进简历的新技能，系统学一遍', add: { dims: { analytic: 1, maker: 1 } } },
-      { t: '把脑子里想的做成看得见摸得着的东西出来', add: { dims: { maker: 3 } } },
-      { t: '把审美和内容感觉打磨到能出活、能变现', add: { dims: { creative: 3 } } },
+      { t: '搞懂一门能写进简历的新技能，系统学一遍', add: { dims: { analytic: 1, maker: 1, social: 1, leader: 1 } } },
+      { t: '先找份能上手的活或小生意跑起来，边干边学', add: { dims: { maker: 1, leader: 1 }, risk: 1 } },
+      { t: '把脑子里想的做成看得见摸得着的东西', add: { dims: { maker: 3 } } },
+      { t: '把审美和内容感觉打磨到能出活、能变现', add: { dims: { creative: 3, social: 2, leader: 1 } } },
       { t: '先把圈子、人脉攒起来，事儿自然跟着来', add: { dims: { social: 3 } } },
     ],
   },
@@ -84,13 +86,13 @@ const QUESTIONS = [
   {
     id: 'q7',
     tag: '约束',
-    text: '给自己拉一条硬线：每月到手低于多少，你就必须回来上班？',
+    text: '给自己拉一条硬线：每月到手低于多少，你会觉得不如先干着？',
     opts: [
-      { t: '5 千以内都得干', add: { floor: 5000 } },
+      { t: '3 千以内也接受，先入行 / 先活下来', add: { floor: 3000 } },
+      { t: '3 千 – 5 千', add: { floor: 5000 } },
       { t: '5 千 – 8 千', add: { floor: 8000 } },
       { t: '8 千 – 1 万 2', add: { floor: 12000 } },
-      { t: '1 万 2 – 1 万 8', add: { floor: 18000 } },
-      { t: '1 万 8 以上，或只要是我热爱的', add: { floor: 30000 } },
+      { t: '1 万 2 以上，或只要是我热爱的', add: { floor: 18000 } },
     ],
   },
   {
@@ -132,22 +134,23 @@ const QUESTIONS = [
   {
     id: 'q11',
     tag: '来路',
-    text: '过去几年，你的主阵地是哪个行业？',
+    text: '过去几年，你的主阵地更接近哪一块？（还没工作过就选「学生 / 无经验」）',
     opts: [
-      { t: 'IT / 互联网平台', add: { industry: 'IT/互联网' } },
-      { t: '软件开发外包', add: { industry: '软件开发' } },
+      { t: 'IT / 互联网 / 软件开发', add: { industry: 'IT/互联网' } },
       { t: '制造 / 工厂', add: { industry: '制造/工厂' } },
       { t: '建筑工程', add: { industry: '建筑工程' } },
       { t: '金融财税', add: { industry: '金融财税' } },
-      { t: '商贸零售', add: { industry: '商贸零售' } },
+      { t: '商贸零售 / 门店', add: { industry: '商贸零售' } },
       { t: '教育培训', add: { industry: '教育培训' } },
-      { t: '医疗健康', add: { industry: '医疗健康' } },
-      { t: '物流运输', add: { industry: '物流运输' } },
+      { t: '医疗健康 / 护理', add: { industry: '医疗健康' } },
+      { t: '物流运输 / 配送', add: { industry: '物流运输' } },
       { t: '农林牧渔', add: { industry: '农林牧渔' } },
       { t: '文化传媒', add: { industry: '文化传媒' } },
-      { t: '机关事业单位', add: { industry: '机关事业单位' } },
-      { t: '家政 / 生活服务', add: { industry: '家政生活服务' } },
-      { t: '其他或自由职业', add: { industry: '其他' } },
+      { t: '餐饮 / 夜市 / 小吃', add: { industry: '餐饮住宿' } },
+      { t: '家政 / 保洁 / 生活服务', add: { industry: '家政生活服务' } },
+      { t: '个体小生意 / 摆摊 / 自由职业', add: { industry: '个体经营' } },
+      { t: '还没正式工作过 / 在校学生', add: { industry: '无经验' } },
+      { t: '其他', add: { industry: '其他' } },
     ],
   },
   {
@@ -179,6 +182,12 @@ const QUESTIONS = [
       { t: '平面设计 / UI', add: { sk: 'design' } },
       { t: '新媒体运营 / 投流', add: { sk: 'newmedia' } },
       { t: '客户服务 / 售后跟进', add: { sk: 'service' } },
+      { t: '做饭 / 烘焙 / 餐饮手艺', add: { sk: 'food' } },
+      { t: '开车 / 配送 / 跑腿', add: { sk: 'driving' } },
+      { t: '维修 / 木工 / 水电 / 手工', add: { sk: 'craft' } },
+      { t: '摆摊 / 开店 / 进货 / 算账', add: { sk: 'business' } },
+      { t: '照顾老人小孩 / 护理', add: { sk: 'care' } },
+      { t: '暂时没有特别拿得出手的，愿意从零学', add: {} },
     ],
   },
   {
@@ -190,6 +199,7 @@ const QUESTIONS = [
       { t: '外勤跑动，别把我钉在工位上', add: { pref: '外勤' } },
       { t: '倒班轮值可以接受，收入到位就行', add: { pref: '倒班' } },
       { t: '时间自主安排，自己定节奏最好', add: { pref: '弹性' } },
+      { t: '自己支个摊 / 开小店 / 做点小生意', add: { pref: '弹性', selfBiz: true } },
     ],
   },
   {
@@ -203,9 +213,21 @@ const QUESTIONS = [
       { t: '哪儿都行，看机会', add: { cityTier: '不限' } },
     ],
   },
-  /* ---- q16 性别：写入 profile.gender，用于匹配角色头像男女双版 ---- */
   {
     id: 'q16',
+    tag: '约束',
+    text: '如果考虑自己干点什么，你现在能拿出的启动成本是——',
+    opts: [
+      { t: '基本没有，最多几千块试水', add: { capital: 1 } },
+      { t: '3 千 – 2 万，能备货 / 租个小摊', add: { capital: 2 } },
+      { t: '2 万 – 10 万，可以认真开个小店', add: { capital: 3 } },
+      { t: '10 万以上，想认真做一门生意', add: { capital: 4 } },
+      { t: '不想投钱，只想先找份工作 / 接单', add: { capital: 0, selfBiz: false } },
+    ],
+  },
+  /* ---- q17 性别：写入 profile.gender，用于匹配角色头像男女双版 ---- */
+  {
+    id: 'q17',
     tag: '来路',
     text: '最后给自己贴个标签，你认可是——',
     opts: [
@@ -292,6 +314,11 @@ const SKILLS = [
   { id: 'design', label: '平面设计/UI' },
   { id: 'newmedia', label: '新媒体运营' },
   { id: 'service', label: '客户服务' },
+  { id: 'food', label: '做饭/烘焙' },
+  { id: 'driving', label: '开车/配送' },
+  { id: 'craft', label: '维修/手工' },
+  { id: 'business', label: '摆摊/开店' },
+  { id: 'care', label: '照护/护理' },
 ];
 /* 技能 → 轴向映射（F3 性格延续用的岗位画像构建） */
 const SKILL_AXIS = {
@@ -307,6 +334,11 @@ const SKILL_AXIS = {
   design: { creative: 2, av: 1 },
   newmedia: { social: 1, creative: 1, av: 1 },
   service: { social: 2, stable: 1 },
+  food: { maker: 3, stable: 1 },
+  driving: { maker: 2, stable: 1 },
+  craft: { maker: 3 },
+  business: { social: 1, leader: 2, maker: 1 },
+  care: { social: 2, stable: 2 },
 };
 const PAT_RANK = { '坐班': 0, '外勤': 1, '倒班': 2, '弹性': 3 };
 
@@ -394,6 +426,56 @@ const ACTIONS = [
   { arc: 'ii_in_sj_2', name: '旅行博主/文旅体验师', sal: '3k–20k+商单', fam: '社会生产服务和生活服务人员', tags: ['体验经济', '轻资产'], J: '旅游策划→线路设计→目的地营销。', F: 'Vlog 频道/城市体验地图。', L: '视频剪辑+叙事结构+当地文化知识储备。', week1: '选本市一条冷门路线，走一遍并拍摄 3 分钟纪实短片，标注三个值得推荐的体验点。', req: { edu: 1, pat: '弹性', skills: ['av'] }, tr: [['文化传媒', .5], ['教育培训', .4]], mkt: { g: 20, c: 68, shortage: false } },
   { arc: 'ii_in_sj_2', name: '技能博主/知识类自媒体', sal: '3k–15k+广告分成', fam: '社会生产服务和生活服务人员', tags: ['可持续变现', '兴趣驱动'], J: '内容编辑→垂类主编→自媒体品牌。', F: '你的一人媒体公司。', L: '剪辑节奏+脚本结构+平台算法适配。', week1: '选定你的第一个系列主题（比如"如何用 100 元搞定一顿饭"），连拍 3 集，看哪个素材反响最好。', req: { edu: 1, pat: '弹性', skills: ['av', 'writing'] }, tr: [['文化传媒', .5], ['教育培训', .6]], mkt: { g: 28, c: 95, shortage: false } },
   { arc: 'ii_in_sj_2', name: '二手/收藏品鉴定师', sal: '4k–12k+佣金', fam: '社会生产服务和生活服务人员', tags: ['小众稳定', '经验变现'], J: '鉴定学徒→鉴定师→平台合作专家→自营店铺。', F: '二手寄卖/拍卖经纪独立工作室。', L: '品类知识积累（球鞋/包袋/数码/珠宝选一）+鉴定方法论。', week1: '在得物上选一个你感兴趣的品类，每周至少浏览 20 条鉴定帖并记录特征关键词。', req: { edu: 1, pat: '弹性', skills: ['av'] }, tr: [['商贸零售', .5], ['文化传媒', .4]], mkt: { g: 18, c: 40, shortage: false } },
+
+  /* ── 低门槛 / 小生意 / 零经验可入 岗位（v4 新增） ── */
+  /* 01 猎手 */
+  { arc: 'ei_at_jp_1', name: '水果生鲜店长 / 水果贩子', sal: '5k–15k+分成', fam: '社会生产服务和生活服务人员', tags: ['现金流快', '可自营', '社区生意'], J: '店员→店长→片区加盟。', F: '社区水果店/水果摊自营。', L: '生鲜损耗管理+进货渠道+社群接龙。', week1: '去本地批发市场蹲一次早市，记录 3 种水果的进价、售价和损耗。', req: { edu: 1, pat: '弹性', skills: ['sales', 'business'] }, tr: [['商贸零售', .7], ['餐饮住宿', .4]], mkt: { g: 18, c: 95, shortage: false }, self: true, cap: 2, entry: true },
+  { arc: 'ei_at_jp_1', name: '房产 / 贷款中介', sal: '5k–20k+提成', fam: '社会生产服务和生活服务人员', tags: ['上手快', '提成制'], J: '经纪人→店长→合伙人。', F: '独立经纪/贷款咨询。', L: '房源谈判+信贷产品+合规话术。', week1: '跟一位中介跑半天盘，记录客户最常问的 5 个问题。', req: { edu: 1, pat: '外勤', skills: ['sales', 'service'] }, tr: [['商贸零售', .6], ['金融财税', .5]], mkt: { g: 12, c: 120, shortage: false }, entry: true },
+  /* 02 先锋 */
+  { arc: 'ei_at_jp_2', name: '夜市小吃摊主 / 地摊烧烤', sal: '6k–18k（旺季更高）', fam: '社会生产服务和生活服务人员', tags: ['可自营', '现金流快', '辛苦'], J: '帮摊→自营→多摊/小店。', F: '夜市烧烤/铁板小吃摊。', L: '选品+出摊动线+食品安全+短视频引流。', week1: '连续 3 晚去本地夜市数人流，记下最火的 3 个品类和客单价。', req: { edu: 1, pat: '弹性', phys: true, skills: ['food', 'business'] }, tr: [['餐饮住宿', .8], ['个体经营', .6]], mkt: { g: 25, c: 90, shortage: false }, self: true, cap: 2, entry: true },
+  { arc: 'ei_at_jp_2', name: '尾货 / 地摊服饰选品', sal: '4k–15k', fam: '社会生产服务和生活服务人员', tags: ['低门槛', '可自营'], J: '档口帮卖→买手→自营。', F: '尾货摊/直播清仓。', L: '面料基础+拿货渠道+定价。', week1: '去一次尾货市场，用 500 元以内进一小批货，周末试卖 3 小时。', req: { edu: 1, pat: '弹性', skills: ['sales', 'business'] }, tr: [['商贸零售', .8], ['个体经营', .5]], mkt: { g: 10, c: 100, shortage: false }, self: true, cap: 1, entry: true },
+  /* 03 守望者 */
+  { arc: 'ei_at_sj_1', name: '快递驿站 / 社区代收点', sal: '5k–12k', fam: '社会生产服务和生活服务人员', tags: ['稳定', '社区生意'], J: '店员→站长→多驿站。', F: '社区驿站/代收+团购。', L: '入库出库系统+投诉处理+社区运营。', week1: '找你所在小区驿站老板聊 20 分钟，问清一天单量和罚款点。', req: { edu: 1, pat: '坐班', skills: ['service', 'office'] }, tr: [['物流运输', .8], ['商贸零售', .5]], mkt: { g: 15, c: 60, shortage: false }, self: true, cap: 2, entry: true },
+  { arc: 'ei_at_sj_1', name: '物业管家 / 社区运营', sal: '5k–9k', fam: '社会生产服务和生活服务人员', tags: ['稳定', '离家近'], J: '管家→主管→项目经理。', F: '社区团购/家政对接。', L: '物业流程+沟通安抚+应急处理。', week1: '在小区业主群做一次小调研：大家最不满意的 3 件事是什么。', req: { edu: 2, pat: '坐班', skills: ['service', 'office'] }, tr: [['家政生活服务', .6], ['商贸零售', .4]], mkt: { g: 12, c: 55, shortage: false }, entry: true },
+  /* 04 外交官 */
+  { arc: 'ei_at_sj_2', name: '社区团购团长', sal: '5k–15k+佣金', fam: '社会生产服务和生活服务人员', tags: ['可自营', '关系变现'], J: '团长→片区运营→平台 BD。', F: '社区团购/社群小店。', L: '选品+社群维护+履约售后。', week1: '拉一个 50 人的小区试团，跑通一次从接龙到分发的全流程。', req: { edu: 1, pat: '弹性', skills: ['sales', 'business', 'service'] }, tr: [['商贸零售', .7], ['家政生活服务', .4]], mkt: { g: 20, c: 80, shortage: false }, self: true, cap: 1, entry: true },
+  { arc: 'ei_at_sj_2', name: '门店导购 / 店长', sal: '5k–12k+提成', fam: '社会生产服务和生活服务人员', tags: ['上手快', '可晋升'], J: '导购→店长→区域督导。', F: '小品牌代理/社区店。', L: '销售话术+陈列+库存。', week1: '去 3 家同类门店各逛 10 分钟，记录店员第一句话怎么开场。', req: { edu: 1, pat: '坐班', skills: ['sales', 'service'] }, tr: [['商贸零售', .8], ['餐饮住宿', .3]], mkt: { g: 14, c: 85, shortage: false }, entry: true },
+  /* 05 主理人 */
+  { arc: 'ei_in_jp_1', name: '小餐饮主理人 / 早餐店', sal: '8k–20k', fam: '社会生产服务和生活服务人员', tags: ['可自营', '辛苦但实在'], J: '学徒→店长→自营。', F: '早餐/小吃/社区餐饮店。', L: '产品标准化+选址+成本核算。', week1: '连续 3 天早起观察一家早餐店，记录 6–9 点的客流和出餐节奏。', req: { edu: 1, pat: '弹性', phys: true, skills: ['food', 'business'] }, tr: [['餐饮住宿', .8], ['个体经营', .6]], mkt: { g: 22, c: 100, shortage: false }, self: true, cap: 3 },
+  { arc: 'ei_in_jp_1', name: '社区咖啡 / 奶茶小店', sal: '5k–15k', fam: '社会生产服务和生活服务人员', tags: ['可自营', '审美变现'], J: '店员→店长→自营。', F: '社区咖啡/奶茶店。', L: '出品 SOP+选址+小红书引流。', week1: '选 3 家社区咖啡馆，蹲点记录下午客流与客单价。', req: { edu: 1, pat: '弹性', skills: ['food', 'service', 'business'] }, tr: [['餐饮住宿', .7], ['商贸零售', .3]], mkt: { g: 20, c: 110, shortage: false }, self: true, cap: 3, entry: true },
+  /* 06 天赋者 */
+  { arc: 'ei_in_jp_2', name: '直播带货 / 农产品直播', sal: '4k–20k+佣金', fam: '社会生产服务和生活服务人员', tags: ['低门槛', '可自营'], J: '助播→主播→团队/自营。', F: '农产品/本地生活直播。', L: '镜头表达+选品+投流基础。', week1: '用手机拍 3 条 30 秒产品介绍，挑一条发出去看数据。', req: { edu: 1, pat: '弹性', skills: ['av', 'sales', 'newmedia'] }, tr: [['文化传媒', .6], ['商贸零售', .5]], mkt: { g: 30, c: 120, shortage: false }, entry: true },
+  { arc: 'ei_in_jp_2', name: '婚礼跟拍 / 活动摄影', sal: '5k–18k', fam: '社会生产服务和生活服务人员', tags: ['手艺变现', '可接单'], J: '摄影助理→跟拍师→工作室。', F: '婚礼/活动跟拍接单。', L: '相机基础+布光+剪辑交付。', week1: '免费帮一位朋友拍一组活动照片，按交付标准修 9 张。', req: { edu: 1, pat: '弹性', skills: ['av'] }, tr: [['文化传媒', .7], ['家政生活服务', .3]], mkt: { g: 15, c: 70, shortage: false }, entry: true },
+  /* 07 守护者 */
+  { arc: 'ei_in_sj_1', name: '月嫂 / 育儿嫂', sal: '8k–18k', fam: '社会生产服务和生活服务人员', tags: ['高客单', '需培训'], J: '育儿嫂→月嫂→金牌。', F: '母婴护理接单/工作室。', L: '母婴护理证+婴幼儿照护+沟通。', week1: '咨询一家正规培训机构，问清证书、学费和接单渠道。', req: { edu: 1, pat: '弹性', phys: true, skills: ['care'] }, tr: [['家政生活服务', .9], ['医疗健康', .5]], mkt: { g: 35, c: 60, shortage: true }, entry: true },
+  { arc: 'ei_in_sj_1', name: '养老护理员 / 医院护工', sal: '5k–10k', fam: '社会生产服务和生活服务人员', tags: ['缺口大', '稳定'], J: '护理员→组长→机构主管。', F: '居家照护/陪诊服务。', L: '基础护理+急救+老人沟通。', week1: '联系一家养老机构，申请半天的陪护观摩。', req: { edu: 1, pat: '倒班', phys: true, skills: ['care', 'service'] }, tr: [['家政生活服务', .8], ['医疗健康', .6]], mkt: { g: 45, c: 50, shortage: true }, entry: true },
+  /* 08 社交家 */
+  { arc: 'ei_in_sj_2', name: '夜市套圈 / 小游戏摊主', sal: '4k–12k', fam: '社会生产服务和生活服务人员', tags: ['低成本', '可自营'], J: '帮摊→自营→多摊。', F: '夜市游戏摊/亲子小游戏。', L: '选点位+道具成本+现场招揽。', week1: '周末去夜市观察 3 个游戏摊，记录围观人数与成交率。', req: { edu: 1, pat: '弹性', skills: ['business', 'sales'] }, tr: [['个体经营', .8], ['餐饮住宿', .4]], mkt: { g: 12, c: 60, shortage: false }, self: true, cap: 1, entry: true },
+  { arc: 'ei_in_sj_2', name: '亲子活动 / 社区活动组织', sal: '5k–15k', fam: '社会生产服务和生活服务人员', tags: ['关系驱动', '可接单'], J: '执行→策划→自营工作室。', F: '亲子活动/社区活动接单。', L: '活动流程+安全预案+招募。', week1: '在小区组织一次 10 组家庭的周末小活动，收个成本价。', req: { edu: 1, pat: '弹性', skills: ['sales', 'service'] }, tr: [['教育培训', .5], ['家政生活服务', .5]], mkt: { g: 15, c: 50, shortage: false }, entry: true },
+  /* 09 架构师 */
+  { arc: 'ii_at_jp_1', name: '家电 / 手机维修师傅', sal: '6k–15k', fam: '生产制造及有关人员', tags: ['手艺', '可自营'], J: '学徒→师傅→店长。', F: '维修店/上门维修。', L: '电路基础+主板/家电拆装+配件渠道。', week1: '找一家维修店谈半天学徒观摩，记录最常见的 3 类故障。', req: { edu: 1, pat: '坐班', skills: ['craft', 'machinery'] }, tr: [['制造/工厂', .4], ['家政生活服务', .5]], mkt: { g: 20, c: 70, shortage: true }, self: true, cap: 2, entry: true },
+  { arc: 'ii_at_jp_1', name: '水电 / 装修施工队长', sal: '8k–20k', fam: '生产制造及有关人员', tags: ['手艺', '可自营'], J: '水电工→工长→包工头。', F: '家装水电/维修接单。', L: '水电规范+看图+报价。', week1: '跟一个装修工地待半天，记录水电阶段的工序和材料。', req: { edu: 1, pat: '外勤', phys: true, skills: ['craft', 'machinery'] }, tr: [['建筑工程', .8], ['家政生活服务', .4]], mkt: { g: 18, c: 60, shortage: true }, self: true, cap: 2 },
+  /* 10 谋士 */
+  { arc: 'ii_at_jp_2', name: '二手车 / 二手数码回收评估', sal: '6k–20k', fam: '社会生产服务和生活服务人员', tags: ['眼力', '可自营'], J: '评估助理→评估师→合伙人。', F: '回收/寄卖小店。', L: '车况/机型鉴定+行情定价+渠道。', week1: '在二手平台看 30 条同款商品，整理一份价格区间表。', req: { edu: 1, pat: '外勤', skills: ['business', 'data'] }, tr: [['商贸零售', .7], ['物流运输', .3]], mkt: { g: 20, c: 80, shortage: false }, self: true, cap: 1, entry: true },
+  { arc: 'ii_at_jp_2', name: '生鲜供应链 / 采购买手', sal: '7k–18k', fam: '社会生产服务和生活服务人员', tags: ['行业刚需', '可迁移'], J: '采购助理→买手→供应链主管。', F: '生鲜代采/社区供应链。', L: '品类知识+议价+损耗控制。', week1: '去一次本地批发市场，问 5 个档口的起订量和账期。', req: { edu: 2, pat: '外勤', skills: ['data', 'business', 'sales'] }, tr: [['商贸零售', .7], ['农林牧渔', .5]], mkt: { g: 15, c: 60, shortage: false }, entry: true },
+  /* 11 精算师 */
+  { arc: 'ii_at_sj_1', name: '便利店 / 小店主理人', sal: '5k–15k', fam: '社会生产服务和生活服务人员', tags: ['可自营', '现金流稳'], J: '店员→店长→自营。', F: '便利店/社区小店。', L: '选址+订货+库存周转。', week1: '蹲点 3 家便利店，记录早晚高峰客流和畅销品类。', req: { edu: 1, pat: '弹性', skills: ['business', 'service'] }, tr: [['商贸零售', .8], ['个体经营', .6]], mkt: { g: 10, c: 90, shortage: false }, self: true, cap: 3, entry: true },
+  { arc: 'ii_at_sj_1', name: '仓储 / 库存管理员', sal: '5k–9k', fam: '社会生产服务和生活服务人员', tags: ['稳定', '门槛低'], J: '仓管→主管→仓储经理。', F: '小仓代管/电商打包。', L: 'WMS/Excel+盘点+库位规划。', week1: '找一家电商仓问半天，记录入库到出库的 5 个关键节点。', req: { edu: 1, pat: '坐班', skills: ['data', 'office', 'machinery'] }, tr: [['物流运输', .8], ['商贸零售', .5]], mkt: { g: 12, c: 70, shortage: false }, entry: true },
+  /* 12 解题人 */
+  { arc: 'ii_at_sj_2', name: '数据标注 / AI 训练师', sal: '4k–10k', fam: '社会生产服务和生活服务人员', tags: ['零经验可入', '远程友好'], J: '标注员→质检→项目组长。', F: '标注团队/数据服务接单。', L: '标注规范+质检+基础 Python。', week1: '在一个公开标注平台完成 100 条试标任务，记录易错点。', req: { edu: 2, pat: '坐班', skills: ['data', 'office'] }, tr: [['IT/互联网', .7], ['文化传媒', .3]], mkt: { g: 25, c: 100, shortage: false }, entry: true },
+  { arc: 'ii_at_sj_2', name: '电商运营助理 / 客服主管', sal: '5k–10k', fam: '社会生产服务和生活服务人员', tags: ['上手快', '可晋升'], J: '客服→运营助理→店长。', F: '店铺代运营/客服外包。', L: '平台规则+客服话术+基础数据。', week1: '开一个个人店铺后台逛一遍，把上新流程写成 10 步清单。', req: { edu: 1, pat: '坐班', skills: ['office', 'service', 'data'] }, tr: [['商贸零售', .8], ['IT/互联网', .4]], mkt: { g: 15, c: 110, shortage: false }, entry: true },
+  /* 13 工程师 */
+  { arc: 'ii_in_jp_1', name: '电动车 / 新能源维修技师', sal: '6k–15k', fam: '生产制造及有关人员', tags: ['紧缺手艺', '可自营'], J: '学徒→技师→技术主管。', F: '维修店/上门维修。', L: '三电基础+检测设备+安全规范。', week1: '找一家电动车维修店谈半天观摩，记录 3 个高频维修项目。', req: { edu: 1, pat: '坐班', phys: true, skills: ['craft', 'machinery'] }, tr: [['制造/工厂', .6], ['物流运输', .4]], mkt: { g: 35, c: 55, shortage: true }, self: true, cap: 2, entry: true },
+  { arc: 'ii_in_jp_1', name: '智能家居 / 弱电安装', sal: '6k–15k', fam: '生产制造及有关人员', tags: ['手艺', '可接单'], J: '安装工→技术员→项目主管。', F: '智能家居安装/弱电接单。', L: '弱电布线+设备调试+现场沟通。', week1: '跟着一位安装师傅跑一单，记录从量尺到调试的完整流程。', req: { edu: 1, pat: '外勤', skills: ['craft', 'machinery', 'service'] }, tr: [['建筑工程', .7], ['制造/工厂', .4]], mkt: { g: 20, c: 50, shortage: false }, self: true, cap: 2, entry: true },
+  /* 14 艺术家 */
+  { arc: 'ii_in_jp_2', name: '短视频剪辑接单 / 代运营', sal: '4k–15k', fam: '社会生产服务和生活服务人员', tags: ['远程', '可自营'], J: '剪辑助理→剪辑师→工作室。', F: '剪辑接单/账号代运营。', L: '剪辑节奏+字幕包装+平台规则。', week1: '用现有素材剪 3 条 30 秒成片，挑一条挂到接单平台。', req: { edu: 1, pat: '弹性', skills: ['av', 'newmedia'] }, tr: [['文化传媒', .8], ['IT/互联网', .3]], mkt: { g: 30, c: 130, shortage: false }, self: true, cap: 1, entry: true },
+  { arc: 'ii_in_jp_2', name: '手作 / 文创摊主', sal: '3k–12k', fam: '社会生产服务和生活服务人员', tags: ['低成本', '可自营'], J: '摊主→工作室→品牌。', F: '市集摊/手作电商。', L: '产品设计+成本定价+市集报名。', week1: '做 10 件同一款小手工，周末去市集试卖并记录问价人数。', req: { edu: 1, pat: '弹性', skills: ['craft', 'business', 'design'] }, tr: [['文化传媒', .5], ['个体经营', .6]], mkt: { g: 15, c: 70, shortage: false }, self: true, cap: 1, entry: true },
+  /* 15 手艺人 */
+  { arc: 'ii_in_sj_1', name: '夜市烧烤 / 铁板小吃', sal: '6k–18k', fam: '社会生产服务和生活服务人员', tags: ['辛苦', '现金流快'], J: '帮工→师傅→自营。', F: '烧烤摊/小吃车。', L: '腌制配方+出餐速度+食品安全。', week1: '去一家烧烤店打一晚零工，记录备货和出餐流程。', req: { edu: 1, pat: '弹性', phys: true, skills: ['food', 'business'] }, tr: [['餐饮住宿', .9], ['个体经营', .5]], mkt: { g: 25, c: 100, shortage: false }, self: true, cap: 2, entry: true },
+  { arc: 'ii_in_sj_1', name: '家政保洁 / 收纳师', sal: '5k–12k', fam: '社会生产服务和生活服务人员', tags: ['上门服务', '可接单'], J: '保洁员→组长→自营团队。', F: '家政保洁/收纳接单。', L: '清洁流程+收纳方法+客户沟通。', week1: '免费帮两户朋友做一次深度保洁，记录耗时和客户最在意的点。', req: { edu: 1, pat: '弹性', phys: true, skills: ['service', 'care'] }, tr: [['家政生活服务', .9], ['商贸零售', .3]], mkt: { g: 30, c: 60, shortage: true }, self: true, cap: 1, entry: true },
+  /* 16 探索者 */
+  { arc: 'ii_in_sj_2', name: '同城跑腿 / 代驾 / 外卖骑手', sal: '5k–12k', fam: '社会生产服务和生活服务人员', tags: ['上手快', '时间灵活'], J: '骑手→队长→调度。', F: '跑腿小队/代驾接单。', L: '路线规划+服务规范+安全。', week1: '注册一个跑腿/众包平台，跑 3 单并记录时薪与高峰时段。', req: { edu: 1, pat: '弹性', phys: true, skills: ['driving', 'service'] }, tr: [['物流运输', .9], ['家政生活服务', .4]], mkt: { g: 25, c: 120, shortage: false }, entry: true },
+  { arc: 'ii_in_sj_2', name: '宠物寄养 / 宠物美容', sal: '4k–12k', fam: '社会生产服务和生活服务人员', tags: ['兴趣变现', '可自营'], J: '助理→美容师→自营。', F: '宠物寄养/上门喂养。', L: '宠物护理+美容基础+寄养管理。', week1: '帮朋友照看 2 天宠物，记录喂养、清洁和应急处理流程。', req: { edu: 1, pat: '弹性', skills: ['care', 'service', 'business'] }, tr: [['家政生活服务', .6], ['商贸零售', .3]], mkt: { g: 25, c: 65, shortage: false }, self: true, cap: 2, entry: true },
 ];
 
 /* ---------------- 同型人物案例（示意性虚构场景，非真实人物） ----------------
@@ -465,5 +547,30 @@ const CASE_STORIES = {
     { who: '35 岁 · 采购 · 品类专员', path: '转二手鉴定/买手，专注一个品类', note: '先在一个平台做 100 条鉴定笔记，再开小店。', quote: '看得多不是本事，能说清为什么才是。' },
   ],
 };
+
+/* ---------------- 应届 / 长期空窗 / 低门槛起步 补充案例 ----------------
+   每个类型再补 1 个更接地气的路径切片，同样为示意性虚构场景。 */
+const EXTRA_CASES = {
+  ei_at_jp_1: { who: '28 岁 · 空窗 1 年 · 做过销售', path: '先做社区水果店店长，半年后盘下自己的小摊', note: '没急着找“体面工作”，先把每天现金流跑正。', quote: '面子不值钱，账上每天多两百才值钱。' },
+  ei_at_jp_2: { who: '23 岁 · 应届 · 市场营销', path: '夜市柠檬茶摊起步，边摆摊边拍短视频引流', note: '小摊是最好的市场调研，一周就知道哪个口味能卖。', quote: '先让一百个人掏钱，再谈品牌。' },
+  ei_at_sj_1: { who: '26 岁 · 毕业待业 1 年', path: '从快递驿站店员做到站长，承包一个社区代收点', note: '不挑活，先占住一个社区的位置。', quote: '每天把件数对清楚，比想清楚人生更重要。' },
+  ei_at_sj_2: { who: '30 岁 · 空窗 2 年（照顾家人）', path: '从小区团购团长做起，做到片区运营', note: '原来会处关系，在社区里就是生产力。', quote: '我不需要重新证明自己，我只需要重新开始。' },
+  ei_in_jp_1: { who: '24 岁 · 应届 · 视觉设计', path: '先在社区咖啡馆当店员，一年后合伙开小店', note: '用审美做产品，用打工学经营。', quote: '先学会算房租，再谈风格。' },
+  ei_in_jp_2: { who: '22 岁 · 应届 · 播音', path: '从农产品直播间助播做起，三个月后独立开播', note: '镜头感是真本事，先上场再补货盘。', quote: '没人看也要播，播到有人看为止。' },
+  ei_in_sj_1: { who: '35 岁 · 空窗 3 年（带娃）', path: '考母婴护理证后做育儿嫂，再转养老护理', note: '带娃的三年不是空白，是照护经验。', quote: '我最会看人的状态，这是练出来的。' },
+  ei_in_sj_2: { who: '25 岁 · 应届 · 社团活跃', path: '从亲子活动执行做起，周末接社区活动', note: '会张罗人，在活动行业直接变现。', quote: '我不怕热闹，我怕没人来。' },
+  ii_at_jp_1: { who: '27 岁 · 大专 · 零经验', path: '家电维修学徒 8 个月，出师后进售后网点', note: '先把手艺练到能独立上门，再谈收入。', quote: '拆坏三台，就学会修一台。' },
+  ii_at_jp_2: { who: '29 岁 · 空窗 1 年 · 做过采购', path: '转二手车评估，从看 100 台车开始', note: '采购的议价能力，在回收生意里直接复用。', quote: '我不猜价格，我查成交。' },
+  ii_at_sj_1: { who: '23 岁 · 应届 · 会计', path: '先做仓储管理员，一年后转库存主管', note: '先把库存账做成表，再谈分析。', quote: '数字对不上，先别谈管理。' },
+  ii_at_sj_2: { who: '22 岁 · 应届 · 文科', path: '从数据标注做起，转质检和项目组长', note: '零经验也能入行，关键是细致和稳定。', quote: '我做的不是标注，是让别人能信任的数据。' },
+  ii_in_jp_1: { who: '25 岁 · 中专 · 喜欢拆车', path: '电动车维修学徒，两年后自己开店', note: '兴趣先变成手艺，手艺再变成生意。', quote: '我喜欢的东西，终于能换钱了。' },
+  ii_in_jp_2: { who: '24 岁 · 应届 · 编导', path: '接短视频剪辑单，半年后做账号代运营', note: '先按单交付，再谈长期合作。', quote: '我不等伯乐，我先把片子剪好。' },
+  ii_in_sj_1: { who: '32 岁 · 空窗 2 年 · 工厂', path: '转家政保洁与收纳，半年后带小团队接单', note: '把体力活做成标准化服务，收入更稳。', quote: '干净不干净，客户一眼就知道。' },
+  ii_in_sj_2: { who: '21 岁 · 应届 · 旅游专业', path: '一边跑同城跑腿，一边做本地文旅内容', note: '先养活自己，再慢慢把兴趣做成内容。', quote: '我先跑起来，方向会在路上出现。' },
+};
+
+Object.entries(EXTRA_CASES).forEach(([k, v]) => {
+  if (CASE_STORIES[k]) CASE_STORIES[k].push(v);
+});
 
 window.RB_DATA = { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, AGE_BANDS, EDU_RANK_LABEL, PAT_RANK, CLASSIFY_DIM, ACTIONS, CASE_STORIES };

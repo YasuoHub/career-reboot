@@ -9,10 +9,11 @@
   const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, CLASSIFY_DIM, ACTIONS } = window.RB_DATA;
 
   const MODE_LABELS = {
-    mode_urgent: '刚经历裁员 · 速返优先',
-    mode_gap: '空窗转换中',
+    mode_urgent: '刚离职 · 速返优先',
+    mode_gap: '长期空窗 · 重回职场',
     mode_in: '在职过渡 · 双线布局',
     mode_blur: '心动未动 · 小步试错',
+    mode_fresh: '应届 / 零经验 · 第一份工作',
   };
 
   /* ---------- Loading ---------- */
@@ -210,6 +211,7 @@
       modes: [], risk: 0, floor: 0, hours: 1,
       ageBand: 2, eduRank: 2, industry: '其他', health: 2,
       skills: [], pref: '坐班', cityTier: '不限', gender: '',
+      stage: '', capital: 0, selfBiz: false,
     };
     QUESTIONS.forEach(q => {
       if (q.multi) { (answers[q.id] || []).forEach(i => { const o = q.opts[i]; if (o && o.add && o.add.sk && !profile.skills.includes(o.add.sk)) profile.skills.push(o.add.sk); }); return; }
@@ -227,6 +229,9 @@
         if (o.add.pref) profile.pref = o.add.pref;
         if (o.add.cityTier) profile.cityTier = o.add.cityTier;
         if (o.add.gender) profile.gender = o.add.gender;
+        if (o.add.stage) profile.stage = o.add.stage;
+        if (typeof o.add.capital === 'number') profile.capital = o.add.capital;
+        if (typeof o.add.selfBiz === 'boolean') profile.selfBiz = o.add.selfBiz;
       }
     });
 
@@ -238,10 +243,11 @@
     const archetypeId = classify(norm);
     const arc = ARCHETYPES[archetypeId] || ARCHETYPES['ii_at_sj_2']; // 防御：未知时兜底
 
+    const freshLike = profile.stage === 'fresh' || profile.industry === '无经验';
     const chips = [
       { name: '试错胆量', pct: Math.max(45, Math.min(95, 50 + profile.risk * 11)) },
       { name: '转型续航', pct: profile.hours === 0 ? 92 : profile.hours === 1 ? 76 : 60 },
-      { name: '重启紧迫度', pct: ({ mode_urgent: 88, mode_gap: 64, mode_in: 40, mode_blur: 55 })[profile.modes[0]] ?? 50 },
+      { name: '重启紧迫度', pct: ({ mode_urgent: 88, mode_gap: 68, mode_in: 40, mode_blur: 55, mode_fresh: 72 })[profile.modes[0]] ?? 50 },
     ];
 
     // ---- 硬过滤 ----
@@ -249,13 +255,18 @@
     const pool = ACTIONS.filter(c => c.arc === archetypeId);
     const passPattern = c => !(profile.pref === '坐班' && c.req.pat === '倒班') && !(profile.pref === '弹性' && c.req.pat === '倒班');
     const passEdu = c => profile.eduRank >= c.req.edu;
-    const passHealth = c => !((profile.health === 3 && c.req.pat === '外勤' && c.req.phys) || (profile.health === 4 && c.req.pat === '倒班'));
+    const passHealth = c => !((profile.health >= 3 && c.req.phys) || (profile.health === 4 && c.req.pat === '倒班'));
     const passFloor = c => { if (lowSalOf(c) >= profile.floor) return true; return c.mkt.g >= 30 || (c.mkt.shortage && profile.risk >= 0); };
     const skillHit = cs => profile.skills.filter(s => cs.includes(s)).length;
     const passHours = c => { const cs = c.req.skills || []; return !(profile.hours === 2 && c.req.edu >= 3 && c.req.pat === '坐班' && skillHit(cs) < Math.ceil(cs.length / 2)); };
 
     let cand = pool.filter(c => passPattern(c) && passEdu(c) && passHealth(c) && passFloor(c) && passHours(c));
-    if (cand.length < 2) cand = pool.slice();
+    if (cand.length < 3) {
+      // 保留最重要的人身与收入约束，放宽形态/学历/时间，保证 TOP3 完整
+      const relaxed = pool.filter(c => passHealth(c) && passFloor(c));
+      cand = [...new Set([...cand, ...relaxed])];
+      if (cand.length < 3) cand = pool.slice();
+    }
 
     // ---- 五维软打分 ----
     const userVec = {}; AXES.forEach(a => userVec[a.key] = norm[a.key]);
@@ -264,9 +275,11 @@
 
     const scored = cand.map(c => {
       const cs = c.req.skills || [];
-      const f1 = !cs.length ? 50 : Math.round(hitN(cs) / (new Set([...cs, ...profile.skills])).size * 100);
+      const f1 = !cs.length ? 50 : (profile.skills.length
+        ? Math.round(hitN(cs) / (new Set([...cs, ...profile.skills])).size * 100)
+        : 40); // 零经验：不做“技能空白”惩罚
       const t = (c.tr || []).find(([ind]) => ind === profile.industry);
-      const f2 = Math.round((t ? t[1] : 0.35) * 100);
+      const f2 = freshLike ? 50 : Math.round((t ? t[1] : 0.35) * 100);
       const cv = {}; cs.forEach(s => { const ax = SKILL_AXIS[s]; if (ax) Object.entries(ax).forEach(([k, v]) => (cv[k] = (cv[k] || 0) + v)); });
       const f3 = Math.round(cosSim(userVec, cv) * 100);
       let f4 = Math.log(1 + c.mkt.g) / Math.log(61) * 60;
@@ -275,7 +288,12 @@
       const weeks = 4 + (cs.length - hitN(cs)) * 6 + Math.max(0, c.req.edu - profile.eduRank) * 6;
       const cap = profile.hours === 0 ? 95 : profile.hours === 1 ? 72 : 45;
       const f5 = Math.round(cap * Math.exp(-weeks / 18));
-      const _rawScore = Math.round(f1 * .30 + f2 * .20 + f3 * .15 + f4 * .20 + f5 * .15);
+      // 自营倾向 / 启动资金 / 零经验入行友好度，作为排序修正项
+      const selfBonus = (profile.selfBiz && c.self) ? 6 : 0;
+      const capGap = (profile.selfBiz && c.self && Number.isFinite(c.cap)) ? Math.max(0, c.cap - profile.capital) : 0;
+      const capPenalty = capGap ? -5 * capGap : 0;
+      const entryBonus = (freshLike && c.entry) ? 5 : 0;
+      const _rawScore = Math.round(f1 * .30 + f2 * .20 + f3 * .15 + f4 * .20 + f5 * .15 + selfBonus + capPenalty + entryBonus);
       return { rank: 0, ...c, _rawScore, scoreNum: _rawScore, fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5 }, gapSkills: cs.filter(s => !profile.skills.includes(s)) };
     }).sort((a, b) => b._rawScore - a._rawScore);
 
@@ -289,6 +307,8 @@
     scored.slice(0, 3).forEach((c, i) => (c.rank = '#' + (i + 1)));
 
     const notes = [];
+    if (freshLike) notes.push('先选能快速上手的入口');
+    else if (profile.stage === 'gap') notes.push('空窗期用学习或作品补叙事');
     if (profile.risk <= -1) notes.push('低风险路线优先'); else if (profile.floor >= 18000) notes.push('收入硬线优先于兴趣');
 
     return { archetype: archetypeId, arc, dims, norm, chips, context: (MODE_LABELS[profile.modes[0]] || '') + (notes.length ? ' · ' + notes.join(' · ') : ''), gender: profile.gender, profile, top3: scored.slice(0, 3), ts: Date.now() };
@@ -522,10 +542,10 @@
             <ul class="teaser-list">
               <li><b>你是谁</b>三段式人格解读 + 六维逐项拆解，解释你为什么会这样选。</li>
               <li><b>往哪走</b>TOP3 方向的 12 周落地路线，按你每周能投入的时间安排节奏。</li>
-              <li><b>怎么讲</b>简历改写示例 + 面试高频问题，把上一段经历讲成优势。</li>
+              <li><b>怎么讲</b>经历改写示例 + 面试高频问题，把你的经历讲成优势。</li>
               <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
             </ul>
-            <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 16 道作答生成，不套模板，数据只在本机。</p>
+            <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 17 道作答生成，不套模板，数据只在本机。</p>
           </div>
         </section>
         <button class="teaser-expand" id="teaser-expand" type="button" aria-controls="report-teaser" aria-expanded="false">

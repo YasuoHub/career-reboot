@@ -116,14 +116,35 @@
       isDrv ? '讲一次你主动发起、并推动到结果的项目；中途最大的阻力是什么？'
             : '讲一次你把团队或流程从混乱变有序的经历，具体改了哪几个环节？',
     ];
+    if (p.stage === 'gap') {
+      list.unshift('这段空窗期你具体在做什么？为什么现在决定回来？');
+      list.push('如果重新上班，你打算怎么在前两周快速进入状态？');
+    } else if (p.stage === 'fresh' || p.industry === '无经验') {
+      list.unshift('你没有正式工作经验，凭什么觉得自己能做这个方向？');
+      list.push('在校、兼职或自学期间，哪件事最能证明你上手快？');
+    }
     list.push(`如果给你 3 个月从零进入「${c.name}」，你会按什么顺序学、先做哪个作品？`);
     return list;
   }
 
   function resumeSample(c, p) {
-    const industry = p.industry && p.industry !== '其他' ? p.industry : '上一份工作';
+    const stage = p.stage || '';
     const own = (p.skills || []).map(skillLabel).filter(Boolean).slice(0, 2);
-    const skillText = own.length ? own.join(' + ') : '你现有的核心技能';
+    const skillText = own.length ? own.join(' + ') : '你愿意学的入门技能';
+
+    if (stage === 'gap') {
+      return `空窗期不是空白，但别写成「待业」。把它写成一段主动安排：<br />`
+        + `「空窗期（20XX.XX–20XX.XX）里，我系统学习了【课程 / 证书】，完成【一个作品 / 项目】，`
+        + `同时承担【家庭照护 / 兼职】；现在希望把【能力】用到【${c.name}】方向。」<br />`
+        + `<em>关键：说明这段时间你并没有停，只是换了一种方式积累。</em>`;
+    }
+    if (stage === 'fresh' || p.industry === '无经验') {
+      return `没有正式工作也能写：把「在学校 / 兼职 / 自己做过的项目」改成可量化的一句：<br />`
+        + `「在【社团 / 兼职 / 自学项目】里，用【${skillText}】把【某个具体问题】解决到【结果】，`
+        + `服务或影响了【X】人。」<br />`
+        + `<em>没有精确数字就写范围；重点写「你具体做了什么」，而不是「你参与过」。</em>`;
+    }
+    const industry = p.industry && p.industry !== '其他' ? p.industry : '上一份工作';
     return `把简历里「负责${industry}相关工作的执行与协调」这类描述，改成有变量、有结果的一句：<br />`
       + `「在【${industry}】项目中，用【${skillText}】把【某个混乱流程】重做成【可复用 SOP / 模板】，`
       + `让【耗时 / 返工 / 投诉】从【X】降到【Y】。」<br />`
@@ -139,6 +160,8 @@
     if (!r || !r.arc) return '<p class="rep-empty">报告数据丢失，请重新测试。</p>';
     const arc = r.arc;
     const p = r.profile || {};
+    const isGap = p.stage === 'gap';
+    const isFresh = !isGap && (p.stage === 'fresh' || p.industry === '无经验');
     const norm = r.norm || {};
     const orderNo = ctx.order?.outTradeNo || ctx.unlock?.outTradeNo || '';
     const gender = r.gender === '男' ? 'm' : 'f';
@@ -237,7 +260,7 @@
             <div class="rep-fbs">
               ${Object.entries(fb).map(([k, v]) => bar(k, v)).join('')}
             </div>
-            <p class="rep-note">这些分不是玄学：技能重合看你会的手艺，行业迁移看你上一段经历能不能复用，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间。</p>
+            <p class="rep-note">这些分不是玄学：技能重合看你会的手艺，行业迁移看${isFresh ? '你的兴趣/专业与这个方向的距离' : '你上一段经历能不能复用'}，性格延续看你做得顺不顺手，市场时机看岗位供需，投入可行看你每周能挤出多少时间。</p>
 
             <h4>12 周路线（${esc(plan.pace.label)}）</h4>
             <p class="rep-note">${esc(plan.pace.hint)}</p>
@@ -250,7 +273,7 @@
               ? `你目前缺的是 <b>${c.gapSkills.map(skillLabel).map(esc).join('、')}</b>。先补最短缺的那一项，别同时开五个坑。`
               : '关键手艺你已经齐了，缺的只是把它们打包成作品和案例。'}</p>
 
-            <h4>简历改写示例</h4>
+            <h4>${isFresh ? '经历改写示例' : '简历改写示例'}</h4>
             <blockquote class="rep-resume">${resumeSample(c, p)}</blockquote>
 
             <h4>面试会问到的</h4>
@@ -273,7 +296,11 @@
           </div>
           <div class="rep-move">
             <b>本月</b>
-            <p>把上一份工作里最复杂的一个项目，从头到尾写成一份 SOP。它既是你面试的弹药，也是进入「${esc(top1.name || '新方向')}」的敲门砖。</p>
+            <p>${isFresh
+              ? `把一次课程设计、社团活动或兼职经历，从头到尾写成一份复盘：背景、你负责什么、结果如何。它会成为你面试「${esc(top1.name || '新方向')}」时最实在的弹药。`
+              : isGap
+                ? `把空窗期做过的学习、照护、接活整理成一条时间线，写成一段 150 字的「这段时间我在做什么」。面试被问到时，你能平静地讲完。`
+                : `把上一份工作里最复杂的一个项目，从头到尾写成一份 SOP。它既是你面试的弹药，也是进入「${esc(top1.name || '新方向')}」的敲门砖。`}</p>
           </div>
           <div class="rep-move">
             <b>下月</b>

@@ -346,7 +346,7 @@ const RB_Poster = (() => {
     ctx.font = `400 17px ${FS}`;
     ctx.fillStyle = dim;
     const host = location.hostname.replace(/^www\./, '');
-    ctx.fillText(host + ' · 16 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 64, 1148);
+    ctx.fillText(host + ' · 17 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 64, 1148);
 
     const url = cv.toDataURL('image/png');
     return url;
@@ -479,7 +479,7 @@ const RB_Poster = (() => {
     // 页脚
     ctx.font = `400 14px ${FS}`;
     ctx.fillStyle = 'rgba(245,243,255,.34)';
-    ctx.fillText('16 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 56, 984);
+    ctx.fillText('17 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 56, 984);
 
     return cv.toDataURL('image/png');
   }
