@@ -1,0 +1,97 @@
+js/report.js
+  s_bcc5527e1dcba5::t_a63bb33f19c5be 30
+  s_bcc5527e1dcba5::t_755847c69393e6 26-27
+  s_bcc5527e1dcba5::t_13ef9662992b05 101,109-110,233,238-241,244-247,250-251,255,257-258,261-267,269,273,317
+docs/岗位推荐系统-v2设计.md
+  s_bcc5527e1dcba5::t_7351f9aff2adf7 3-4
+docs/深度报告设计.md
+  s_bcc5527e1dcba5::t_ed2dcb00f07fdf 4-5
+tests/e2e-multi.js
+  s_bcc5527e1dcba5::t_9c2b2cdd3dd588 21-25
+  s_bcc5527e1dcba5::t_7541565702772c 90-94
+js/cities.js
+  s_bcc5527e1dcba5::t_be42f80242a780 1-236
+js/app.js
+  s_bcc5527e1dcba5::t_2b5bc6ea5c104e 213-215,218-222
+  s_bcc5527e1dcba5::t_ef7bd859306fe2 137-144,147-175,177-179,181-188,192,194-196,199-212,216-217,233-234,505
+  s_bcc5527e1dcba5::t_8fcb58fc1cb334 9-11,43,61
+  s_bcc5527e1dcba5::t_8000cf1007f7d6 197-198,382,393,484,523
+  s_bcc5527e1dcba5::t_ef0dadfafc6c04 145-146
+  s_bcc5527e1dcba5::t_06902d944ed42d 193,466
+  s_bcc5527e1dcba5::t_d81e49bf854b79 189-191
+  s_bcc5527e1dcba5::t_5bcaf464e9f459 176,180
+  s_bcc5527e1dcba5::t_bab87b5f28464c 379-381
+  s_bcc5527e1dcba5::t_455b670c8179d2 383-385,390-392
+  s_bcc5527e1dcba5::t_704569f565bba6 394
+  s_bcc5527e1dcba5::t_a3d8ce54bdc29f 463-465
+  s_bcc5527e1dcba5::t_b7a1327eb3288c 467-469,481-483
+  s_bcc5527e1dcba5::t_19daf12712c959 485-487
+  s_bcc5527e1dcba5::t_371aeb82702e4d 502-504
+  s_bcc5527e1dcba5::t_c463fbc2373dde 506-508
+  s_bcc5527e1dcba5::t_c3172fb88dad3c 520-522
+  s_bcc5527e1dcba5::t_5c71a229d1e79a 304,308,329-337,353-354,357-359,365-378,386-389,396-397,400,408,411-462,470-480,488-489,492-501,509-510,517,519,692,721-728,730-731,733-734,736,739-744,748,752,754-756,767,922,1190,1379
+index.html
+  s_bcc5527e1dcba5::t_7271f5612c118f 16
+  s_bcc5527e1dcba5::t_bdd720a1f9abc3 121-125,127
+README.md
+  s_bcc5527e1dcba5::t_ea1eb41fdcbd59 85-86
+  s_bcc5527e1dcba5::t_854f9ef47d095f 3
+  s_bcc5527e1dcba5::t_e3c553cb0fb856 28,37-41
+  s_bcc5527e1dcba5::t_8c7e73932be270 16-19
+js/jobs.js
+  s_bcc5527e1dcba5::t_7c093abe1106f8 1221
+  s_bcc5527e1dcba5::t_a25b33fa54319f 1-121,1251-1254
+  s_bcc5527e1dcba5::t_f7db05abc9c610 1240
+  s_bcc5527e1dcba5::t_51f0793c7591e6 1233-1234
+  s_bcc5527e1dcba5::t_d5c46b39149145 687-688
+  s_bcc5527e1dcba5::t_d8af581a08cf40 1177
+  s_bcc5527e1dcba5::t_772633d432bd4f 593
+  s_bcc5527e1dcba5::t_401227e04d7fae 751-752
+  s_bcc5527e1dcba5::t_8b851fca9567c3 649
+  s_bcc5527e1dcba5::t_57062a81ac7985 122-142,145-155,158-168,171-175,178-370,373-377,380-458,461-512
+  s_bcc5527e1dcba5::t_3203128d4361e3 648
+  s_bcc5527e1dcba5::t_7a778d7001f427 759
+  s_bcc5527e1dcba5::t_ec4d768a31b512 765-766
+  s_bcc5527e1dcba5::t_5eb2fa5c532fc5 796-982,991-1176,1178-1182,1185-1201,1204-1220,1222-1232,1235-1239,1241-1245,1247-1250
+  s_bcc5527e1dcba5::t_c19eeb6be202c9 983-990
+  s_bcc5527e1dcba5::t_fa312b6348e211 655-656
+  s_bcc5527e1dcba5::t_6191cacaa9c3bd 1183-1184
+  s_bcc5527e1dcba5::t_a04d11dd482318 1246
+  s_bcc5527e1dcba5::t_132fa265010a32 459-460
+  s_bcc5527e1dcba5::t_6d233eddcb84ee 758
+  s_bcc5527e1dcba5::t_549dd40443ca6d 513-592,594-647,650-654,657-661,663-686,689-750,753-757,760-764,767-795
+  s_bcc5527e1dcba5::t_aa4ab2c7f2894a 1202-1203
+  s_bcc5527e1dcba5::t_cc3c44843a7b97 378-379
+  s_bcc5527e1dcba5::t_55aa018d2d9669 169-170
+  s_bcc5527e1dcba5::t_6239ab2a244aa7 176-177
+  s_bcc5527e1dcba5::t_0f5446daecfe7c 662
+  s_bcc5527e1dcba5::t_9195ccf69f0da5 371-372
+  s_bcc5527e1dcba5::t_7a867314a99c66 143-144
+  s_bcc5527e1dcba5::t_0957c2978a3cfb 156-157
+css/style.css
+  s_bcc5527e1dcba5::t_97552de1fffe04 791,996-1114
+js/data.js
+  s_bcc5527e1dcba5::t_b018cf7ac057b3 190-197,216-218,326-333,354-361,458
+js/poster.js
+  s_bcc5527e1dcba5::t_dc692e95271838 470
+package.json
+  s_bcc5527e1dcba5::t_2512d64ff30714 14-15
+tests/data-check.cjs
+  s_bcc5527e1dcba5::t_6b8979dddd88a1 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "214ce647863fe481c5a049705ad4bd7aa53e70b1",
+  "prompts": {},
+  "sessions": {
+    "s_bcc5527e1dcba5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f320dfb-3750-45ad-bfcf-75b5ac8786f4",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
