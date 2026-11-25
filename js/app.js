@@ -905,7 +905,7 @@
       const w = Math.max(320, node.scrollWidth);
       const h = Math.max(400, node.scrollHeight);
       const maxArea = 16e6;
-      let ratio = Math.min(2, window.devicePixelRatio || 1.5);
+      let ratio = Math.max(1.5, Math.min(2, window.devicePixelRatio || 1.5));
       if (w * h * ratio * ratio > maxArea) ratio = Math.max(1, Math.sqrt(maxArea / (w * h)));
 
       const url = await window.htmlToImage.toPng(node, {
