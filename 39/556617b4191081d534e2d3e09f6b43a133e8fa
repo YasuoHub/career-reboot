@@ -1,0 +1,31 @@
+css/style.css
+  s_88739e2e3fe509::t_ec89573ecb7593 762-785,790-791,812-818,820-821,823-837,962,966-968
+js/app.js
+  s_88739e2e3fe509::t_0c666a525ce376 608,615-621,782,822,824-875,877,879,881-882,884-921,923-933,935-937
+js/data.js
+  s_88739e2e3fe509::t_d751676f89ff6c 137
+js/poster.js
+  s_88739e2e3fe509::t_89e87fff0ef2c6 380,389-400,402
+js/report.js
+  s_88739e2e3fe509::t_af6a8ee4e229ed 108-111,113-116,121,123,185,239,258,286,310,320-321,339-342,347
+js/vendor/html-to-image.min.js
+  s_88739e2e3fe509::t_cd3c3bb26e1d77 1-8
+package.json
+  s_88739e2e3fe509::t_36939190d98b63 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "39556617b4191081d534e2d3e09f6b43a133e8fa",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
