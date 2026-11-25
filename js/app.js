@@ -885,6 +885,68 @@
       })));
   }
 
+  function loadImageEl(src) {
+    return new Promise(resolve => {
+      if (!src) return resolve(null);
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  /** 给截图加左右留白，并把头像用 Canvas 叠上去，避免截图库渲染 img 失败 */
+  async function composeReportImage(baseUrl, node, avatar, padCss = 24) {
+    const base = await loadImageEl(baseUrl);
+    if (!base) return baseUrl;
+    const sx = base.naturalWidth / Math.max(1, node.scrollWidth);
+    const sy = base.naturalHeight / Math.max(1, node.scrollHeight);
+    const pad = Math.round(padCss * Math.min(sx, sy));
+    const W = base.naturalWidth + pad * 2;
+    const H = base.naturalHeight + pad * 2;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#0b0b14'; ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(base, pad, pad);
+
+    if (avatar && avatar.src && avatar.box) {
+      const im = await loadImageEl(avatar.src);
+      if (im) {
+        const x = pad + avatar.box.x * sx;
+        const y = pad + avatar.box.y * sy;
+        const w = avatar.box.w * sx;
+        const h = avatar.box.h * sy;
+        const r = Math.min(18 * sx, w / 2, h / 2);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        ctx.clip();
+        const scale = Math.max(w / im.naturalWidth, h / im.naturalHeight);
+        const dw = im.naturalWidth * scale;
+        const dh = im.naturalHeight * scale;
+        ctx.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = Math.max(1, sx);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    return cv.toDataURL('image/png');
+  }
+
   async function inlineImages(node) {
     const restores = [];
     for (const img of node.querySelectorAll('img')) {
@@ -917,6 +979,7 @@
     showBusy('正在生成完整报告图片… 包含摘要、六维、TOP3 与 12 周路线');
     let hideEls = [], prevDisplay = [];
     let restoreImgs = null, avatarEl = null, avatarPrev = null, skelEl = null, skelDisplay = '';
+    let avatarBox = null, avatarSrc = '';
     try {
       const node = $('#report-body');
       if (!node) throw new Error('报告节点缺失');
@@ -929,7 +992,7 @@
       skelEl = node.querySelector('.rep-avatar-skel');
       if (skelEl) { skelDisplay = skelEl.style.display; skelEl.style.display = 'none'; }
       if (avatarEl) {
-        avatarPrev = { transition: avatarEl.style.transition, opacity: avatarEl.style.opacity };
+        avatarPrev = { transition: avatarEl.style.transition, opacity: avatarEl.style.opacity, visibility: avatarEl.style.visibility };
         // 截图时强制不透明，避免过渡未完成被截成黑色占位
         avatarEl.style.transition = 'none';
         avatarEl.style.opacity = '1';
@@ -948,6 +1011,13 @@
       // 把头像等图片转成 dataURL，避免截图库跨域/缓存问题导致占位
       restoreImgs = await inlineImages(node);
       await new Promise(resolve => setTimeout(resolve, 60));
+      if (avatarEl) {
+        const nr = node.getBoundingClientRect();
+        const ar = avatarEl.getBoundingClientRect();
+        avatarBox = { x: ar.left - nr.left, y: ar.top - nr.top, w: ar.width, h: ar.height };
+        avatarSrc = avatarEl.currentSrc || avatarEl.src || '';
+        avatarEl.style.visibility = 'hidden'; // 截图留空，头像稍后由 Canvas 叠加
+      }
       if (!window.htmlToImage) throw new Error('html-to-image 未加载');
 
       const w = Math.max(320, node.scrollWidth);
@@ -956,7 +1026,7 @@
       let ratio = Math.max(1.5, Math.min(2, window.devicePixelRatio || 1.5));
       if (w * h * ratio * ratio > maxArea) ratio = Math.max(1, Math.sqrt(maxArea / (w * h)));
 
-      const url = await window.htmlToImage.toPng(node, {
+      const rawUrl = await window.htmlToImage.toPng(node, {
         pixelRatio: ratio,
         backgroundColor: '#0b0b14',
         width: w,
@@ -964,6 +1034,7 @@
         cacheBust: false,
         style: { margin: '0', paddingBottom: '24px' },
       });
+      const url = await composeReportImage(rawUrl, node, { box: avatarBox, src: avatarSrc }, 24);
       imageKind = 'report-full';
       showImageInModal(url, '完整报告图片已生成：点「保存到相册」或<b>长按图片</b>保存');
       track('report_image_open', { height: h, ratio });
@@ -985,6 +1056,7 @@
         if (avatarEl && avatarPrev) {
           avatarEl.style.transition = avatarPrev.transition;
           avatarEl.style.opacity = avatarPrev.opacity;
+          avatarEl.style.visibility = avatarPrev.visibility;
         }
         if (skelEl) skelEl.style.display = skelDisplay;
       } catch (_) {}
