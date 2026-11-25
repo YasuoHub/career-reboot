@@ -1,0 +1,19 @@
+js/app.js
+  s_88739e2e3fe509::t_dea025b82ebfe7 908
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8334d3096c8875eb1cfa58666a77fbb69f542bbe",
+  "prompts": {},
+  "sessions": {
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
