@@ -1,0 +1,19 @@
+js/poster.js
+  s_071766b390f65c::t_874e5a211b7e5f 191-192,199-223,408-419
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d63f9fb0bef453e3aa3bbfeae95ed88ab770a58a",
+  "prompts": {},
+  "sessions": {
+    "s_071766b390f65c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff94a6e2-b838-4e85-aad5-e3e25c401dff",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
