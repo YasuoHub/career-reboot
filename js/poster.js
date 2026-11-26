@@ -188,41 +188,6 @@ const RB_Poster = (() => {
     ctx.textBaseline = 'alphabetic';
   }
 
-  /* ---------- 海报雷达两侧岗位卡（传播向：路线 + 岗位 + 薪资） ---------- */
-  function paintJobCard(ctx, x, y, w, h, kicker, name, sal, accent) {
-    ctx.fillStyle = 'rgba(255,255,255,.045)';
-    rr(ctx, x, y, w, h, 18); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    rr(ctx, x, y, w, h, 18); ctx.stroke();
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.font = `500 13px ${FS}`;
-    ctx.fillStyle = 'rgba(245,243,255,.52)';
-    ctx.fillText(kicker, x + 18, y + 25, w - 36);
-    ctx.font = `700 18px ${FS}`;
-    ctx.fillStyle = '#f5f3ff';
-    const nameStr = String(name || '');
-    const maxW = w - 36;
-    let lines;
-    if (!nameStr || ctx.measureText(nameStr).width <= maxW) {
-      lines = nameStr ? [nameStr] : [];
-    } else if (nameStr.length <= 14) {
-      // 均分两行，避免出现「人工智能训练 / 师」这类孤字
-      const half = Math.ceil(nameStr.length / 2);
-      lines = [nameStr.slice(0, half), nameStr.slice(half)];
-    } else {
-      const all = wrap(ctx, nameStr, maxW);
-      lines = all.slice(0, 2);
-      if (all.length > 2) lines[1] = lines[1].slice(0, -1) + '…';
-    }
-    lines.forEach((ln, i) => ctx.fillText(ln, x + 18, y + 52 + i * 22));
-    if (sal) {
-      ctx.font = `700 17px ${FS}`;
-      ctx.fillStyle = accent;
-      ctx.fillText(`${sal}/月`, x + 18, y + h - 15, w - 36);
-    }
-  }
-
   /* ---------- 彩带 ---------- */
   function confetti(color) {
     const cv = document.createElement('canvas');
@@ -382,41 +347,28 @@ const RB_Poster = (() => {
     const sl = wrap(ctx, arc.slogan, 580);
     sl.forEach((ln, i) => ctx.fillText(ln, 63, 568 + i * 46));
 
-    // 关键词（自动换行排布）
+    // 分隔线
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.beginPath(); ctx.moveTo(64, 700); ctx.lineTo(W - 64, 700); ctx.stroke();
+
+    // 左侧：特质标签纵向排列
     ctx.font = `700 22px ${FS}`;
-    let kx = 64, ky = 668;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    let ty = 787;
     arc.keywords.forEach(kw => {
       const w = ctx.measureText(kw).width + 44;
-      if (kx > 64 && kx + w > W - 64) { kx = 64; ky += 62; }
       ctx.strokeStyle = 'rgba(255,255,255,.18)';
-      rr(ctx, kx, ky, w, 46, 23); ctx.stroke();
+      rr(ctx, 64, ty, w, 46, 23); ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,.85)';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(kw, kx + 22, ky + 24);
-      kx += w + 14;
+      ctx.fillText(kw, 64 + 22, ty + 24);
+      ty += 62;
     });
     ctx.textBaseline = 'alphabetic';
 
-    // 分隔线
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.beginPath(); ctx.moveTo(64, 760); ctx.lineTo(W - 64, 760); ctx.stroke();
-
-    // 六维画像（雷达图：归一化后只标维度，不显示数字）
+    // 右侧：六维画像（雷达图：归一化后只标维度，不显示数字）
     const norm = result.norm || {};
-    paintRadar(ctx, W / 2, 898, 100, AXES.map(a => ({ val: norm[a.key], label: a.label })), colors.accent);
-
-    // 雷达两侧：推荐岗位（首选 / 备选，突出薪资便于传播）
-    const topJobs = result.top3 || [];
-    if (topJobs[0]) {
-      paintJobCard(ctx, 64, 839, 168, 118,
-        `${topJobs[0].routeLabel || '推荐路线'} · 首选`,
-        topJobs[0].name || topJobs[0].l4Title, topJobs[0].sal, colors.accent);
-    }
-    if (topJobs[1]) {
-      paintJobCard(ctx, W - 64 - 168, 839, 168, 118,
-        `${topJobs[1].routeLabel || '推荐路线'} · 备选`,
-        topJobs[1].name || topJobs[1].l4Title, topJobs[1].sal, colors.accent);
-    }
+    paintRadar(ctx, 495, 872, 112, AXES.map(a => ({ val: norm[a.key], label: a.label })), colors.accent);
 
     // 稀有度
     ctx.font = `700 24px ${FS}`;
