@@ -190,7 +190,7 @@ const RB_Poster = (() => {
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
-    const { ARCHETYPES } = window.RB_DATA;
+    const { ARCHETYPES, AXES } = window.RB_DATA;
     const arc = ARCHETYPES[result.archetype];
     const colors = arc.colors;
 
@@ -263,10 +263,10 @@ const RB_Poster = (() => {
     const enSpaced = arc.en.split('').join('\u200a') + '\u200a';
     ctx.fillText(enSpaced, 64, 372);
 
-    // CN 大名（左对齐）
+    // CN 大名（左对齐；限宽 380，避免三字名压到右侧头像框）
     ctx.font = `400 128px ${FD}`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(arc.cn, 60, 500);
+    ctx.fillText(arc.cn, 60, 500, 380);
 
     // 口号（左对齐 · 全宽使用）
     ctx.font = `400 31px ${FS}`;
@@ -293,28 +293,36 @@ const RB_Poster = (() => {
     ctx.strokeStyle = 'rgba(255,255,255,.12)';
     ctx.beginPath(); ctx.moveTo(64, 770); ctx.lineTo(W - 64, 770); ctx.stroke();
 
-    // 三指标条
-    ctx.font = `900 40px ${FS}`;
-    result.chips.forEach((c, i) => {
-      const cw = (W - 64 * 2 - 32 * 2) / 3, x = 64 + i * (cw + 32), y = 800;
-      ctx.fillStyle = 'rgba(255,255,255,.045)';
-      rr(ctx, x, y, cw, 108, 20); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.12)';
-      rr(ctx, x, y, cw, 108, 20); ctx.stroke();
-      ctx.fillStyle = colors.accent;
-      ctx.textAlign = 'center';
-      ctx.fillText(c.pct + '', x + cw / 2, y + 60);
-      ctx.font = `400 21px ${FS}`;
+    // 六维画像（逐项条，口径与深度报告一致：norm 0–100）
+    const norm = result.norm || {};
+    ctx.font = `700 20px ${FS}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText('六维画像', 64, 800);
+    let by = 830;
+    AXES.forEach(a => {
+      const v = Math.max(0, Math.min(100, Math.round(norm[a.key] || 0)));
+      ctx.font = `500 16px ${FS}`;
       ctx.fillStyle = dim;
-      ctx.fillText(c.name, x + cw / 2, y + 92);
-      ctx.font = `900 40px ${FS}`;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.label, 64, by);
+      const bx = 126, bw = W - 64 - 48 - bx;
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      rr(ctx, bx, by - 5, bw, 10, 5); ctx.fill();
+      ctx.fillStyle = colors.accent;
+      rr(ctx, bx, by - 5, Math.max(6, bw * v / 100), 10, 5); ctx.fill();
+      ctx.font = `700 16px ${FS}`;
+      ctx.fillStyle = colors.accent;
+      ctx.textAlign = 'right';
+      ctx.fillText(String(v), W - 64, by);
       ctx.textAlign = 'left';
+      by += 34;
     });
+    ctx.textBaseline = 'alphabetic';
 
     // 稀有度
     ctx.font = `700 24px ${FS}`;
     ctx.fillStyle = colors.accent;
-    ctx.fillText('— 和你相似的人不少，你不是一个人', 64, 990);
+    ctx.fillText('— 和你相似的人不少，你不是一个人', 64, 1052);
 
     // 二维码（位置在稀有度右侧）
     const link = location.href.split('#')[0];
@@ -322,7 +330,7 @@ const RB_Poster = (() => {
       'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(link),
       220
     );
-    const qx = W - 64 - 150, qy = 1030;
+    const qx = W - 64 - 150, qy = 1040;
     if (qr) {
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
@@ -342,11 +350,13 @@ const RB_Poster = (() => {
     ctx.textAlign = 'left';
     ctx.font = `900 30px ${FD}`;
     ctx.fillStyle = '#fff';
-    ctx.fillText('测测你适合怎样重启', 64, 1098);
+    ctx.fillText('测测你适合怎样重启', 64, 1130);
     ctx.font = `400 17px ${FS}`;
     ctx.fillStyle = dim;
     const host = location.hostname.replace(/^www\./, '');
-    ctx.fillText(host + ' · 17 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 64, 1148);
+    // 限制在二维码左侧宽度内，超长自动折行，避免压住右下角二维码
+    const foot = wrap(ctx, host + ' · 17 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 460);
+    foot.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, 64, 1180 + i * 26));
 
     const url = cv.toDataURL('image/png');
     return url;
