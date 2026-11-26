@@ -1,0 +1,23 @@
+index.html
+  s_071766b390f65c::t_4a8e5899c3baa1 135
+js/app.js
+  s_071766b390f65c::t_470811212889a9 21
+js/poster.js
+  s_071766b390f65c::t_5e4a291b0f9a88 118-190,367,369,371,376,384,404,410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "68e470c4882f11e725b542b0a5989e7c1f80b1df",
+  "prompts": {},
+  "sessions": {
+    "s_071766b390f65c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff94a6e2-b838-4e85-aad5-e3e25c401dff",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
