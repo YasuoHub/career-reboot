@@ -153,14 +153,12 @@
     return `<div class="rep-bar"><span>${esc(label)}</span><i><b style="width:${v}%"></b></i><em>${v}</em></div>`;
   }
 
-  /* 报告展示分：按本组内部的相对强弱归一化到 82–98，保证大于 80 且彼此有差异 */
-  function displayScores(entries, min = 82, max = 98) {
-    const sorted = entries
-      .map(([k, v], i) => ({ k, v: Number(v) || 0, i }))
-      .sort((a, b) => (b.v - a.v) || (a.i - b.i));
-    const step = sorted.length > 1 ? (max - min) / (sorted.length - 1) : 0;
+  /* 六维展示分：直接使用归一化后的 0–100 原始分，不做伪造的高分拉伸 */
+  function displayScores(entries) {
     const out = {};
-    sorted.forEach((x, i) => { out[x.k] = Math.round(max - step * i); });
+    entries.forEach(([k, v]) => {
+      out[k] = Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
+    });
     return out;
   }
 
@@ -360,7 +358,7 @@
         <p class="rep-kicker">DEEP REPORT · 深度报告</p>
         <div class="rep-hero">
           <div class="rep-hero-text">
-            <p class="rep-no">图鉴 №${esc(arc.num)} · 仅占 ${esc(arc.rarity)}%</p>
+            <p class="rep-no">图鉴 №${esc(arc.num)}</p>
             <h1>${esc(arc.cn)}<small>${esc(arc.en)}</small></h1>
             <p class="rep-slogan">${esc(arc.slogan)}</p>
           </div>
@@ -374,7 +372,7 @@
       <section class="rep-sec rep-ai">
         <div class="rep-sec-h"><span>01</span><h2>你的重启摘要</h2><em>SUMMARY</em></div>
         <p class="rep-ai-text" id="rep-ai-text">${esc(localSummary(r))}</p>
-        <p class="rep-ai-note" id="rep-ai-note">基于您的作答智能生成</p>
+        <p class="rep-ai-note" id="rep-ai-note">基于您的作答生成（本地摘要，仅供参考）</p>
       </section>
       ${sec1}
       ${sec2}

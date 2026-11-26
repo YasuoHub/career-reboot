@@ -10,8 +10,11 @@ career-reboot/
 ├── legal.html        # 用户协议 + 隐私政策
 ├── vercel.json       # Vercel 部署配置（SPA rewrite + 安全头）
 ├── css/style.css     # 设计系统：深色编辑风 × 玻璃拟态，配色随原型注入
-├── api/              # 支付 / 验单 / 邀请 / AI 摘要 Serverless Functions
-├── lib/              # 支付宝 SDK、订单工具、KV、邀请逻辑
+├── api/              # 支付 / 验单 / AI 摘要（邀请接口已下线）
+├── lib/              # 支付宝 SDK、订单工具（KV/邀请逻辑保留作历史参考）
+├── scripts/          # build-guide.mjs：生成岗位/城市/问题静态图鉴
+├── guide/            # 静态图鉴页（233 页，SEO 入口）
+├── css/guide.css     # 图鉴页样式（轻量、无外部依赖）
 └── js/
     ├── data.js       # 17 题 / 16 型 / 技能轴 / 同型案例
     ├── cities.js     # 203 个城市：能级 / 区域 / 本地产业标签
@@ -68,6 +71,18 @@ vercel --prod     # 上线 production
 **绑自有域名**：Deploy 页 Domain → Add → 输入你的域名 → 按提示把 DNS 的
 `CNAME` 指向 `cname.vercel-dns.com`（根域用 A 记录指 `76.76.21.21`）。
 
+## 静态图鉴（SEO / 低维护）
+
+`npm run build:guide` 会从 `js/jobs.js`、`js/cities.js` 生成：
+
+- `/guide/` 索引页
+- `/guide/jobs/*.html`：180 个岗位页
+- `/guide/cities/*.html`：40 个重点城市页
+- `/guide/questions/*.html`：12 个转行问题页
+- `sitemap.xml` / `robots.txt`
+
+这些页面是纯静态 HTML，不依赖前端 JS；样式在 `css/guide.css`。数据更新后重跑一次即可，之后只需每月检查一次。`vercel.json` 已把 `/guide/` 排除在 SPA rewrite 之外，并给静态页设置 1 小时缓存。
+
 ## 微信里分享的三件事（上线前必做）
 
 1. **og:image**：微信抓链接卡片需要一张常驻静态图。把海报样式导出成
@@ -84,19 +99,18 @@ vercel --prod     # 上线 production
 - `ARCHETYPES[].combo` 同理；组合型写两个轴 key，别写错拼写（曾有 `analyst/analytic` 一字之差导致双高型全灭的事故，以此校验为准）
 - `JOBS[]`：每条 L3 必须有 `tasks(≥5) / req / skills / arcs / tr / salRange / orgs / learn / week1`；同一个岗位允许 `arcs` 多原型归属
 - 改完岗位或城市数据后跑自检：`npm run test:data`（校验 180 岗、8 大类分布、16 型每型 ≥20 个候选、城市字段）
-- 参与人数目前是本机种子数（`store.total`），上线时换成真实埋点查询接口即可，仅封面一个展示位
+- 参与人数不再展示虚构数字；如需展示，必须接入真实埋点并标注口径
 
 ## 合规红线（已内置，勿删改）
 
 - 全部页面标注「趣味性格探索，不构成医疗、心理诊断或就业承诺」
-- 无手机号收集、无登录授权、无诱导分享；数据不出设备
-- 职业薪资为公开市场参考区间，免责写在海报底部
+- 不收集手机号、不要求登录、不做诱导分享；作答默认只存本机，仅 AI 摘要发送匿名画像
+- 职业薪资为公开报告量级参考，免责写在页面底部；健康题可跳过
 
-## 商业化钩子（预留位置，接 Phase 2 时用）
+## 当前商业化（最小方案）
 
-| 阶段 | 挂载点 |
-|---|---|
-| 流量主广告 | 结果页 `.res-body` 底部插 Banner 位 |
-| 9.9 元详细报告 | `#sc-computing` 分析屏之后加付费墙 |
-| 分销裂变 | `#btn-poster` 海报码换成带推荐参数的短链 |
-| B 端白标 | `ARCHETYPES[].colors` 已参数化，换皮即成企业版 |
+| 收入点 | 位置 | 说明 |
+|---|---|---|
+| 9.9 元深度报告 | 结果页付费墙 | 支付宝 H5；解锁后 1 年内可回看，凭订单号可恢复 |
+| 免费图鉴/SEO | `/guide/` | 180 岗位 + 40 城市 + 12 问题页，作为自然流量入口 |
+| 广告 | 暂不接 | H5/微信场景下展示广告收益极低且合规成本高；如要做，优先联盟/CPS |

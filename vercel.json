@@ -1,9 +1,17 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/guide", "destination": "/guide/index.html" },
+    { "source": "/guide/", "destination": "/guide/index.html" },
+    { "source": "/((?!api/|guide/|restore\\.html|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/guide/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+      ]
+    },
     {
       "source": "/js/(.*)",
       "headers": [

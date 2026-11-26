@@ -1,5 +1,6 @@
 /* /api/alipay/price —— 前端展示价格（与下单同源，唯一来源是 ALIPAY_PRICE）
-   GET → { amount: '9.90', currency: 'CNY' } */
+   GET → { amount: '9.90', currency: 'CNY' }
+   价格必须大于 0；0 或非法值会回退为 9.90。 */
 import { PRICE } from '../../lib/alipay-orders.js';
 
 export const config = { api: { external: true } };

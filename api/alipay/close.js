@@ -7,6 +7,14 @@ export const config = { api: { external: true } };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  const adminToken = (process.env.ADMIN_TOKEN || process.env.REFUND_ADMIN_TOKEN || '').trim();
+  if (!adminToken) return res.status(503).json({ error: 'ADMIN_DISABLED' });
+  const provided = String(req.headers['x-admin-token'] || '').trim();
+  if (!provided || provided !== adminToken) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+
   const { outTradeNo } = req.body || {};
   if (!isValidOutTradeNo(outTradeNo)) return res.status(400).json({ error: 'missing or invalid outTradeNo' });
 

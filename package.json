@@ -11,7 +11,8 @@
   },
   "scripts": {
     "dev": "echo \"dev script placeholder\"",
-    "check": "node --check js/app.js && node --check js/vendor/html-to-image.min.js && node --check js/report.js && node --check js/data.js && node --check js/cities.js && node --check js/jobs.js && node --check js/poster.js && node --check api/ai-summary.js && node --check api/alipay/create-order.js && node --check api/alipay/price.js && node --check api/alipay/verify.js && node --check api/alipay/notify.js && node --check api/alipay/return.js && node --check api/alipay/query-order.js && node --check api/invite/state.js && node --check api/invite/claim.js && node --check lib/alipay-orders.js && node --check lib/alipay-sdk.js && node --check lib/kv.js && node --check lib/invite.js",
-    "test:data": "node tests/data-check.cjs"
+    "check": "node --check js/app.js && node --check js/vendor/html-to-image.min.js && node --check js/report.js && node --check js/data.js && node --check js/cities.js && node --check js/jobs.js && node --check js/poster.js && node --check api/ai-summary.js && node --check api/alipay/create-order.js && node --check api/alipay/price.js && node --check api/alipay/verify.js && node --check api/alipay/notify.js && node --check api/alipay/return.js && node --check api/alipay/query-order.js && node --check api/invite/state.js && node --check api/invite/claim.js && node --check lib/alipay-orders.js && node --check lib/alipay-sdk.js && node --check lib/kv.js && node --check lib/invite.js && node --check scripts/build-guide.mjs",
+    "test:data": "node tests/data-check.cjs",
+    "build:guide": "node scripts/build-guide.mjs"
   }
 }

@@ -314,7 +314,7 @@ const RB_Poster = (() => {
     // 稀有度
     ctx.font = `700 24px ${FS}`;
     ctx.fillStyle = colors.accent;
-    ctx.fillText(`— 这类重启者仅占全部被测者的 ${arc.rarity}%`, 64, 990);
+    ctx.fillText('— 和你相似的人不少，你不是一个人', 64, 990);
 
     // 二维码（位置在稀有度右侧）
     const link = location.href.split('#')[0];
@@ -384,7 +384,7 @@ const RB_Poster = (() => {
     ctx.fillText('DEEP REPORT · 重启人格图鉴', 56, 86);
     ctx.font = `400 17px ${FS}`;
     ctx.fillStyle = faint;
-    ctx.fillText(`图鉴 №${arc.num} · 仅占 ${arc.rarity}%`, 56, 116);
+    ctx.fillText(`图鉴 №${arc.num}`, 56, 116);
 
     const gender = result.gender === '男' ? 'm' : 'f';
     const avatarFile = String(arc.avatarF || '').replace(/-f\.webp$/, `-${gender}.webp`);

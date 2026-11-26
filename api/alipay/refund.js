@@ -7,6 +7,16 @@ export const config = { api: { external: true } };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  /* 退款是资金操作，必须带管理员令牌；未配置时默认关闭，避免匿名调用。
+     日常退款优先走支付宝商家后台，此接口仅作自动化兜底。 */
+  const adminToken = (process.env.ADMIN_TOKEN || process.env.REFUND_ADMIN_TOKEN || '').trim();
+  if (!adminToken) return res.status(503).json({ error: 'REFUND_DISABLED' });
+  const provided = String(req.headers['x-admin-token'] || '').trim();
+  if (!provided || provided !== adminToken) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+
   const { outTradeNo, amount, reason, outRequestNo } = req.body || {};
   if (!isValidOutTradeNo(outTradeNo)) return res.status(400).json({ error: 'missing or invalid outTradeNo' });
 

@@ -60,8 +60,8 @@ export default async function handler(req, res) {
   const context = clampText(body.context, 40);
 
   const payload = { archetype, norm, top3, context };
-  const base = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const model = (process.env.AI_MODEL || 'gpt-4o-mini').trim();
+  const base = (process.env.AI_BASE_URL || 'https://api.deepseek.com').replace(/\/+$/, '');
+  const model = (process.env.AI_MODEL || 'deepseek-flash').trim();
   // DeepSeek 新模型默认可能开启思考模式，会占用 max_tokens；摘要场景明确关闭
   const isDeepSeek = /deepseek\.com/i.test(base);
 

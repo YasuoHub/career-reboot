@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /restore.html
+
+Sitemap: https://www.career-turn.icu/sitemap.xml

@@ -17,8 +17,8 @@
   const LAZY_SCRIPTS = {
     cities: './js/cities.js?v=1',
     jobs: './js/jobs.js?v=1',
-    report: './js/report.js?v=7',
-    poster: './js/poster.js?v=34',
+    report: './js/report.js?v=8',
+    poster: './js/poster.js?v=35',
     htmlToImage: './js/vendor/html-to-image.min.js?v=1',
   };
   const scriptLoads = {};
@@ -98,8 +98,8 @@
 
   /* ---------- 状态 ---------- */
   const store = {
-    get total() { const v = parseInt(localStorage.getItem('rb_total') || '', 10); return Number.isFinite(v) && v > 380000 ? v : 396447; },
-    bumpTotal() { localStorage.setItem('rb_total', String(this.total + 1)); },
+    get total() { const v = parseInt(localStorage.getItem('rb_total') || '', 10); return Number.isFinite(v) && v > 0 ? v : null; },
+    bumpTotal() { const v = this.total; if (v) localStorage.setItem('rb_total', String(v + 1)); },
     /* 存完整结果，支付回跳/刷新后可恢复并生成深度报告 */
     saveLast(r) { try { localStorage.setItem('rb_last', JSON.stringify(r)); } catch (_) {} },
     getLast() {
@@ -154,26 +154,30 @@
     screens[name].classList.add('active'); window.scrollTo(0, 0);
   }
 
-  /* ---------- 价格（以服务端 ALIPAY_PRICE 为准） ---------- */
+  /* ---------- 价格（以服务端 ALIPAY_PRICE 为准；0 表示免费开放） ---------- */
   let payPrice = null;
   function priceLabel(p) {
     const n = Number(p);
+    if (Number.isFinite(n) && n === 0) return '免费';
     return Number.isFinite(n) && n > 0 ? `¥${n.toFixed(2)}` : '¥--';
   }
   async function getPrice() {
-    if (payPrice) return payPrice;
+    if (payPrice !== null) return payPrice;
     try {
       const r = await fetch('/api/alipay/price', { headers: { Accept: 'application/json' } });
       const d = await r.json();
-      if (r.ok && Number(d.amount) > 0) payPrice = Number(d.amount);
+      const n = Number(d.amount);
+      if (r.ok && Number.isFinite(n) && n >= 0) payPrice = n;
     } catch (_) { /* 失败时保留占位；实际支付金额始终以服务端下单结果为准 */ }
     return payPrice;
   }
   function applyPrice(p) {
-    if (!p) return;
+    if (p === null || p === undefined) return;
     document.querySelectorAll('[data-price]').forEach(el => { el.textContent = priceLabel(p); });
   }
-  function refreshPrice() { getPrice().then(applyPrice); }
+  function refreshPrice() {
+    getPrice().then(applyPrice);
+  }
 
   /* ---------- 业务埋点（GTM dataLayer） ---------- */
   function track(name, params = {}) {
@@ -183,23 +187,8 @@
     } catch (_) { /* 统计失败不影响业务 */ }
   }
 
-  /* 本机匿名标识：用于邀请进度与跨设备解锁，不含任何身份信息 */
-  const uid = (() => {
-    try {
-      let v = localStorage.getItem('rb_uid');
-      if (!v || !/^[A-Za-z0-9_-]{8,64}$/.test(v)) {
-        v = (window.crypto && crypto.randomUUID)
-          ? crypto.randomUUID()
-          : `u${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
-        localStorage.setItem('rb_uid', v);
-      }
-      return v;
-    } catch (_) { return `u${Date.now()}`; }
-  })();
-
   /* ---------- 封面 ---------- */
   function initCover() {
-    $('#stat-total').textContent = store.total.toLocaleString('zh-CN');
     const last = store.getLast(), lastEl = $('#cover-last');
     if (last && ARCHETYPES[last.archetype]) {
       lastEl.hidden = false;
@@ -529,7 +518,7 @@
         metrics: { f1, f2, f3, f4, f5, cityFit, arcFit, base, weeks, underFloor, salLo, salHi, hitList, l4, capGap, patternPenalty },
         l4Title: l4.title, cityLabel: l4.cityLabel, org: l4.org,
         salRange: l4.salRange, sal: l4.salText,
-        scoreNum: Math.max(55, Math.min(98, base)),
+        scoreNum: Math.max(0, Math.min(100, base)),
         fb: { 技能重合: f1, 行业迁移: f2, 性格延续: f3, 市场时机: f4, 投入可行: f5, 城市匹配: cityFit, 原型契合: arcFit },
         gapSkills: cs.filter(s => !profile.skills.includes(s)),
         alternatives: [],
@@ -565,7 +554,7 @@
       c.reasons = uniq; c.caveat = caveat;
       const range = dimRange[def.key];
       const pct = range.max === range.min ? 1 : (c._dim[def.key] - range.min) / (range.max - range.min);
-      c.scoreNum = Math.round(74 + pct * 22);
+      c.scoreNum = Math.round(30 + pct * 60);
       return { key: def.key, label: def.label, sub: def.sub, icon: def.icon, job: c, reasons: uniq, caveat };
     };
 
@@ -615,7 +604,6 @@
     result = score(); purgeDrafts();
     if (!result || !result.arc) { console.error(new Error('SCORING_RESULT_EMPTY')); toast('分析出了点状况，返回重来一次吧'); go('cover'); return; }
     track('quiz_complete', { archetype: result.archetype });
-    claimReferral(result.archetype);
     go('computing');
     const lines = [['正在读取你的作答指纹<b>…</b>', 0], ['比对 <b>六维</b> 职业倾向与权重<b>…</b>', 500], ['校验个人要素与约束<b>…</b>', 1100], ['为你校准方向<b>…</b>', 1700]];
     const ul = $('#compute-lines'); ul.innerHTML = '';
@@ -676,95 +664,7 @@
     });
   }
 
-  /* ---------- 邀请裂变 ---------- */
-  function inviteLink() {
-    const origin = (location.origin && location.origin !== 'null')
-      ? location.origin
-      : 'https://www.career-turn.icu';
-    return `${origin}/?ref=${encodeURIComponent(uid)}`;
-  }
-
-  function updateInviteUI(d) {
-    const card = $('#invite-card');
-    if (!card) return;
-    card.hidden = false;
-    const need = Number(d.need) || 1;
-    const progress = Math.min(need, Number(d.progress) || 0);
-    document.querySelectorAll('[data-invite-need]').forEach(el => { el.textContent = String(need); });
-    const fill = $('#invite-bar-fill');
-    if (fill) fill.style.width = `${Math.round(progress / need * 100)}%`;
-    const label = $('#invite-progress');
-    if (label) label.textContent = progress >= need ? '已达成，正在解锁…' : `当前进度 ${progress} / ${need}`;
-  }
-
-  async function loadInviteState() {
-    if (store.isUnlocked()) return;
-    const card = $('#invite-card');
-    if (!card) return;
-    try {
-      const r = await fetch(`/api/invite/state?uid=${encodeURIComponent(uid)}`, { headers: { Accept: 'application/json' } });
-      const d = await r.json().catch(() => ({}));
-      if (!d.configured) { card.hidden = true; return; }
-      updateInviteUI(d);
-      if (d.unlocked && d.token) {
-        store.saveUnlock({ via: 'share', token: d.token, exp: parseTokenExp(d.token) });
-        track('invite_unlock', { progress: d.progress });
-        toast('邀请已达成，深度报告解锁');
-        renderResult();
-      }
-    } catch (_) { card.hidden = true; }
-  }
-
-  async function shareInvite() {
-    const url = inviteLink();
-    const lead = `我在「重启人格图鉴」测出了「${result?.arc?.cn || '我的重启人格'}」，你也来测测，顺便帮我解锁深度报告👉`;
-    const fullText = `${lead} ${url}`;
-
-    // 先把链接展示出来：即使剪贴板权限被拒，也能长按手动复制
-    const row = $('#invite-link-row');
-    const input = $('#invite-link');
-    if (row && input) {
-      row.hidden = false;
-      input.value = url;
-      try { input.focus(); input.select(); } catch (_) {}
-    }
-
-    track('invite_share');
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: '重启人格图鉴', text: fullText, url });
-        return;
-      } catch (_) { /* 用户取消或系统分享不可用，回落复制 */ }
-    }
-    const ok = await copyText(fullText);
-    if (ok) {
-      toast('邀请链接已复制，发给好友即可');
-    } else {
-      if (input) {
-        try { input.focus(); input.select(); } catch (_) {}
-      }
-      toast('已生成邀请链接，请长按上方链接手动复制');
-    }
-  }
-
-  async function claimReferral(archetype) {
-    let ref = '';
-    try { ref = sessionStorage.getItem('rb_ref') || ''; } catch (_) {}
-    if (!ref || ref === uid) return;
-    try {
-      const r = await fetch('/api/invite/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref, viewer: uid, archetype }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok && d.counted) {
-        try { sessionStorage.removeItem('rb_ref'); } catch (_) {}
-        toast('已为好友的邀请进度 +1');
-        track('invite_claimed', { progress: d.progress });
-      }
-    } catch (_) { /* 静默失败，不影响测评 */ }
-  }
+  /* 邀请裂变已下线：付费报告只通过购买或订单号恢复，不再有“邀请免费解锁”。 */
 
   function renderResult() {
     if (!result || !result.arc) { go('cover'); toast('结果没接住，请重测一次'); return; }
@@ -791,7 +691,7 @@
           <img class="arc-avatar" src="/avatars/${avatarFile}" alt="${arc.cn}" width="147" height="184" loading="eager" decoding="async" />
         </div>
       </div>
-      <p class="rarity-chip"><span class="pip"></span>这类重启者仅占全部被测者的 ${arc.rarity}%</p>
+      <p class="rarity-chip"><span class="pip"></span>和你相似的人不少，你不是一个人</p>
 
       <div class="panel">
         <div class="panel-h"><h3>重启指数</h3><span>REBOOT INDEX</span></div>
@@ -852,7 +752,7 @@
               <li><b>怎么讲</b>经历改写示例 + 面试高频问题，把你的经历讲成优势。</li>
               <li><b>先做什么</b>本周 / 本月 / 下月三件事，不用再自己找第一步。</li>
             </ul>
-            <p class="teaser-note">一次买断 <b data-price>${priceLabel(payPrice)}</b>，可随时回看；全部基于你的 17 道作答生成，不套模板，数据只在本机。</p>
+            <p class="teaser-note">解锁深度报告：<b data-price>${priceLabel(payPrice)}</b>，解锁后 1 年内可回看；基于你的 17 道作答组合生成，作答默认存本机。</p>
           </div>
         </section>
         <button class="teaser-expand" id="teaser-expand" type="button" aria-controls="report-teaser" aria-expanded="false">
@@ -863,7 +763,7 @@
       <div class="res-ctas">
         <button id="btn-unlock" class="btn-unlock${unlocked ? ' is-owned' : ' is-hidden'}" type="button">
           <span class="unlock-main">${unlocked ? '查看深度报告' : `解锁深度报告 <b data-price>${priceLabel(payPrice)}</b>`}</span>
-          <span class="unlock-sub">${unlocked ? '已解锁 · 可随时回看' : '人格深读 · 12 周路线 · 简历与面试话术'}</span>
+          <span class="unlock-sub">${unlocked ? '已解锁 · 1 年内可回看' : '人格深读 · 12 周路线 · 简历与面试话术'}</span>
           ${unlocked ? '' : '<i class="unlock-spark" aria-hidden="true">✦</i>'}
         </button>
         <div class="cta-row">
@@ -871,28 +771,15 @@
           <button id="btn-redo" class="btn btn-ghost">再测一次</button>
         </div>
       </div>
-      ${unlocked ? '' : `
-      <div class="invite-card" id="invite-card" hidden>
-        <div class="invite-head"><span>免费解锁</span><em>INVITE &amp; UNLOCK</em></div>
-        <p class="invite-copy">不想付费？邀请 <b data-invite-need>1</b> 位好友完成测评，也能免费解锁这份深度报告。</p>
-        <div class="invite-bar"><i id="invite-bar-fill"></i></div>
-        <p class="invite-progress" id="invite-progress">当前进度 0 / <span data-invite-need>1</span></p>
-        <button class="btn btn-ghost invite-btn" id="btn-invite" type="button">生成邀请链接</button>
-        <div class="invite-link-row" id="invite-link-row" hidden>
-          <input id="invite-link" class="invite-link" type="text" readonly aria-label="邀请链接" />
-          <span class="invite-link-hint">长按链接可手动复制</span>
-        </div>
-      </div>`}
-      <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />作答与报告默认仅保存在本机；邀请功能仅同步匿名标识与人格类型代号。薪资与供需为公开报告量级参考。<br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a></p>
+      <p class="res-guide"><a href="/guide/">先看看岗位与城市图鉴 →</a></p>
+      <p class="res-restore"><a href="/restore.html">已购买？凭订单号恢复 →</a></p>
+      <p class="res-legal">本测试为趣味性格探索，不构成医疗、心理诊断或就业承诺。<br />作答与报告默认保存在本机；仅在你使用 AI 摘要时发送匿名画像。薪资与供需为公开报告量级参考。<br /><a href="/legal.html#terms" target="_blank" rel="noopener">用户协议</a> · <a href="/legal.html#privacy" target="_blank" rel="noopener">隐私政策</a></p>
     `;
 
     $('#btn-poster').addEventListener('click', openPoster);
     $('#btn-unlock').addEventListener('click', () => { if (store.isUnlocked()) openReport(); else openUnlock(); });
     $('#btn-redo').addEventListener('click', restart);
-    const inviteBtn = $('#btn-invite');
-    if (inviteBtn) inviteBtn.addEventListener('click', shareInvite);
     bindTeaser();
-    loadInviteState();
     go('result');
     bindAvatar();
     refreshPrice();
@@ -996,13 +883,14 @@
 
   async function openUnlock() {
     if (store.isUnlocked()) { openReport(); return; }
-    track('unlock_click', { price: payPrice || '' });
+    if (payPrice === null) await getPrice(); // 首屏价格可能尚未返回
+    track('unlock_click', { price: payPrice ?? '' });
     if (isWeChat()) { showWechatTip(); return; }
 
     // 弹窗立刻出现；对上一笔订单的核单放到后台，不阻塞点击反馈
     const overlay = overlayShell(`
       <div class="unlock-card">
-        <p class="unlock-kicker">DEEP REPORT · 一次买断</p>
+        <p class="unlock-kicker">DEEP REPORT · 一次解锁 · 1 年内可回看</p>
         <h3>解锁深度报告 <span class="unlock-price" data-price>${priceLabel(payPrice)}</span></h3>
         <ul class="unlock-includes">
           <li>三段式人格深读 + 六维逐项拆解</li>
@@ -1106,7 +994,7 @@
     if (!el) return;
     if (result.aiSummary) {
       el.textContent = result.aiSummary;
-      if (note) note.textContent = '基于您的作答智能生成';
+      if (note) note.textContent = 'AI 生成，仅供参考';
       return;
     }
     try {
@@ -1125,7 +1013,7 @@
       if (d.summary) {
         result.aiSummary = d.summary;
         el.textContent = d.summary;
-        if (note) note.textContent = '基于您的作答智能生成';
+        if (note) note.textContent = 'AI 生成，仅供参考';
         track('ai_summary_ok');
       }
     } catch (_) { /* 静默降级为本地摘要 */ }
@@ -1553,19 +1441,7 @@
     if (document.visibilityState !== 'visible') return;
     // 从支付宝切回原标签时不会有回跳参数，靠本机订单静默核单
     if (!store.isUnlocked()) checkPendingOrder();
-    if (result && screens.result.classList.contains('active')) loadInviteState();
   });
-
-  /* 记录来自分享链接的推荐人（好友完成测评后上报） */
-  (function captureRef() {
-    try {
-      const ref = new URLSearchParams(location.search).get('ref');
-      if (ref && ref !== uid) {
-        sessionStorage.setItem('rb_ref', ref);
-        track('referral_visit');
-      }
-    } catch (_) { /* 忽略存储异常 */ }
-  })();
 
   initCover();
   prefetchLazy();
