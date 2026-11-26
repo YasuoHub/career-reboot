@@ -18,7 +18,7 @@
     cities: './js/cities.js?v=1',
     jobs: './js/jobs.js?v=1',
     report: './js/report.js?v=8',
-    poster: './js/poster.js?v=37',
+    poster: './js/poster.js?v=38',
     htmlToImage: './js/vendor/html-to-image.min.js?v=1',
   };
   const scriptLoads = {};

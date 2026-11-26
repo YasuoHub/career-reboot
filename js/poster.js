@@ -188,6 +188,25 @@ const RB_Poster = (() => {
     ctx.textBaseline = 'alphabetic';
   }
 
+  /* ---------- 海报雷达两侧小卡（不显示数字） ---------- */
+  function paintSideCard(ctx, x, y, w, h, kicker, main, sub, color) {
+    ctx.fillStyle = 'rgba(255,255,255,.045)';
+    rr(ctx, x, y, w, h, 18); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    rr(ctx, x, y, w, h, 18); ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `500 15px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.5)';
+    ctx.fillText(kicker, x + 20, y + 30);
+    ctx.font = `700 26px ${FS}`;
+    ctx.fillStyle = color;
+    ctx.fillText(main, x + 20, y + 66, w - 40);
+    ctx.font = `400 14px ${FS}`;
+    ctx.fillStyle = 'rgba(245,243,255,.55)';
+    ctx.fillText(sub, x + 20, y + 88, w - 40);
+  }
+
   /* ---------- 彩带 ---------- */
   function confetti(color) {
     const cv = document.createElement('canvas');
@@ -369,6 +388,14 @@ const RB_Poster = (() => {
     // 六维画像（雷达图：归一化后只标维度，不显示数字）
     const norm = result.norm || {};
     paintRadar(ctx, W / 2, 898, 100, AXES.map(a => ({ val: norm[a.key], label: a.label })), colors.accent);
+
+    // 雷达两侧解读卡：最强两项 / 最弱一项，填满两侧留白
+    const byVal = AXES.map(a => ({ val: Number(norm[a.key]) || 0, label: a.label }))
+      .sort((a, b) => b.val - a.val);
+    const subTop = byVal[0].val === byVal[1].val ? '六维较均衡' : `其次 ${byVal[1].label}`;
+    paintSideCard(ctx, 64, 850, 168, 96, '优势维度', byVal[0].label, subTop, colors.accent);
+    paintSideCard(ctx, W - 64 - 168, 850, 168, 96, '补强方向',
+      byVal[byVal.length - 1].label, '补上更有选择', 'rgba(245,243,255,.9)');
 
     // 稀有度
     ctx.font = `700 24px ${FS}`;
