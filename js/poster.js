@@ -115,6 +115,79 @@ const RB_Poster = (() => {
     requestAnimationFrame(step);
   }
 
+  /* ---------- 海报静态雷达图（无数字，只标维度） ----------
+     归一化口径与结果页一致：原始 0→60、100→100（最低 60），避免低分全挤在圆心。 */
+  function paintRadar(ctx, cx, cy, R, axesData, accent) {
+    const n = axesData.length;
+    const scores = axesData.map(d => 60 + Math.max(0, Math.min(100, Number(d.val) || 0)) * 0.4);
+    const angle = i => -Math.PI / 2 + (Math.PI * 2 * i) / n;
+    const hex = accent.replace('#', '');
+    const cr = parseInt(hex.slice(0, 2), 16), cg = parseInt(hex.slice(2, 4), 16), cb = parseInt(hex.slice(4, 6), 16);
+
+    // 网格环
+    for (let ring = 1; ring <= 3; ring++) {
+      ctx.beginPath();
+      const r = R * ring / 3;
+      for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(255,255,255,${0.08 + ring * 0.02})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // 轴线
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < n; i++) {
+      const a = angle(i);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+      ctx.stroke();
+    }
+
+    // 维度标签（不显示分值）
+    ctx.font = `500 16px ${FS}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(245,243,255,.7)';
+    for (let i = 0; i < n; i++) {
+      const a = angle(i);
+      ctx.fillText(axesData[i].label, cx + Math.cos(a) * (R + 26), cy + Math.sin(a) * (R + 26));
+    }
+
+    // 数据面
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = angle(i);
+      const v = R * scores[i] / 100;
+      const x = cx + Math.cos(a) * v, y = cy + Math.sin(a) * v;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},.20)`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${cr},${cg},${cb},.95)`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 顶点
+    for (let i = 0; i < n; i++) {
+      const a = angle(i);
+      const v = R * scores[i] / 100;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(a) * v, cy + Math.sin(a) * v, 4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},1)`;
+      ctx.fill();
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
   /* ---------- 彩带 ---------- */
   function confetti(color) {
     const cv = document.createElement('canvas');
@@ -291,38 +364,16 @@ const RB_Poster = (() => {
 
     // 分隔线
     ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.beginPath(); ctx.moveTo(64, 770); ctx.lineTo(W - 64, 770); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(64, 760); ctx.lineTo(W - 64, 760); ctx.stroke();
 
-    // 六维画像（逐项条，口径与深度报告一致：norm 0–100）
+    // 六维画像（雷达图：归一化后只标维度，不显示数字）
     const norm = result.norm || {};
-    ctx.font = `700 20px ${FS}`;
-    ctx.fillStyle = colors.accent;
-    ctx.fillText('六维画像', 64, 800);
-    let by = 830;
-    AXES.forEach(a => {
-      const v = Math.max(0, Math.min(100, Math.round(norm[a.key] || 0)));
-      ctx.font = `500 16px ${FS}`;
-      ctx.fillStyle = dim;
-      ctx.textBaseline = 'middle';
-      ctx.fillText(a.label, 64, by);
-      const bx = 126, bw = W - 64 - 48 - bx;
-      ctx.fillStyle = 'rgba(255,255,255,.08)';
-      rr(ctx, bx, by - 5, bw, 10, 5); ctx.fill();
-      ctx.fillStyle = colors.accent;
-      rr(ctx, bx, by - 5, Math.max(6, bw * v / 100), 10, 5); ctx.fill();
-      ctx.font = `700 16px ${FS}`;
-      ctx.fillStyle = colors.accent;
-      ctx.textAlign = 'right';
-      ctx.fillText(String(v), W - 64, by);
-      ctx.textAlign = 'left';
-      by += 34;
-    });
-    ctx.textBaseline = 'alphabetic';
+    paintRadar(ctx, W / 2, 898, 100, AXES.map(a => ({ val: norm[a.key], label: a.label })), colors.accent);
 
     // 稀有度
     ctx.font = `700 24px ${FS}`;
     ctx.fillStyle = colors.accent;
-    ctx.fillText('— 和你相似的人不少，你不是一个人', 64, 1052);
+    ctx.fillText('— 和你相似的人不少，你不是一个人', 64, 1068);
 
     // 二维码（位置在稀有度右侧）
     const link = location.href.split('#')[0];
@@ -330,7 +381,7 @@ const RB_Poster = (() => {
       'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&bgcolor=14121f&color=ffffff&data=' + encodeURIComponent(link),
       220
     );
-    const qx = W - 64 - 150, qy = 1040;
+    const qx = W - 64 - 150, qy = 1058;
     if (qr) {
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
@@ -350,13 +401,13 @@ const RB_Poster = (() => {
     ctx.textAlign = 'left';
     ctx.font = `900 30px ${FD}`;
     ctx.fillStyle = '#fff';
-    ctx.fillText('测测你适合怎样重启', 64, 1130);
+    ctx.fillText('测测你适合怎样重启', 64, 1152);
     ctx.font = `400 17px ${FS}`;
     ctx.fillStyle = dim;
     const host = location.hostname.replace(/^www\./, '');
     // 限制在二维码左侧宽度内，超长自动折行，避免压住右下角二维码
     const foot = wrap(ctx, host + ' · 17 道题 · 趣味性格探索 · 不构成医疗或就业承诺', 460);
-    foot.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, 64, 1180 + i * 26));
+    foot.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, 64, 1202 + i * 26));
 
     const url = cv.toDataURL('image/png');
     return url;
