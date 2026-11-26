@@ -19,7 +19,7 @@
   --glow:  rgba(124, 108, 255, .35);
 
   --font-display: 'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -805,7 +805,7 @@ html.lock, body.lock { overflow: hidden; }
 }
 .rep-hero h1 small {
   display: block; margin-top: 8px;
-  font-family: 'Noto Sans SC', sans-serif; font-size: 11px;
+  font-family: var(--font-body); font-size: 11px;
   letter-spacing: .28em; color: var(--ink-dim); text-transform: uppercase;
 }
 .rep-slogan { font-size: 14px; line-height: 1.75; color: color-mix(in srgb, var(--ink) 82%, transparent); }
@@ -948,7 +948,7 @@ html.lock, body.lock { overflow: hidden; }
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .rep-kit-title { font-family: 'ZCOOL KuaiLe', 'PingFang SC', sans-serif; font-size: 27px; line-height: 1.2; }
-.rep-kit-title small { display: block; margin-top: 6px; font-family: 'Noto Sans SC', sans-serif; font-size: 10.5px; letter-spacing: .26em; color: var(--ink-dim); }
+.rep-kit-title small { display: block; margin-top: 6px; font-family: var(--font-body); font-size: 10.5px; letter-spacing: .26em; color: var(--ink-dim); }
 .rep-kit-line { margin-top: 12px; font-size: 13.5px; line-height: 1.7; color: #dcd9ee; }
 .rep-kit-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .rep-kit-meta span { font-size: 11px; padding: 5px 10px; border-radius: 999px; background: rgba(0, 0, 0, .22); color: #cfcce4; white-space: nowrap; max-width: 100%; }

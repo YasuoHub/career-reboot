@@ -6,9 +6,48 @@
    ============================================================ */
 (() => {
   const $ = s => document.querySelector(s);
-  const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, CLASSIFY_DIM, JOBS, CITIES, CITY_TIER_RANK, CITY_TIER_SALARY, CITY_REGIONS } = window.RB_DATA;
+  const R = window.RB_DATA;
+  const { QUESTIONS, AXES, AXES_MAX, ARCHETYPES, SKILLS, SKILL_AXIS, CLASSIFY_DIM } = R;
   const skillLabel = id => (SKILLS.find(s => s.id === id) || {}).label || id;
   const EDU_LABEL = { 1: '中专/高中', 2: '大专', 3: '本科', 4: '硕士+' };
+
+  /* ---------- 非首屏脚本按需加载 ----------
+     首屏只保留题库/原型/主控制器；岗位库、城市库、报告、海报与截图库
+     在用户开始答题或进入结果页时再加载，避免拖慢 F1 首屏。 */
+  const LAZY_SCRIPTS = {
+    cities: './js/cities.js?v=1',
+    jobs: './js/jobs.js?v=1',
+    report: './js/report.js?v=7',
+    poster: './js/poster.js?v=34',
+    htmlToImage: './js/vendor/html-to-image.min.js?v=1',
+  };
+  const scriptLoads = {};
+  function loadScript(key) {
+    if (scriptLoads[key]) return scriptLoads[key];
+    const src = LAZY_SCRIPTS[key];
+    if (!src) return Promise.reject(new Error(`未知脚本：${key}`));
+    scriptLoads[key] = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => { delete scriptLoads[key]; reject(new Error(`脚本加载失败：${src}`)); };
+      document.head.appendChild(s);
+    });
+    return scriptLoads[key];
+  }
+  const ensureData = () => Promise.all([loadScript('cities'), loadScript('jobs')]);
+  const ensurePoster = () => (window.RB_Poster ? Promise.resolve() : loadScript('poster'));
+  const ensureReport = () => (window.RB_Report ? Promise.resolve() : loadScript('report'));
+  const ensureHtmlToImage = () => (window.htmlToImage ? Promise.resolve() : loadScript('htmlToImage'));
+  function prefetchLazy() {
+    const warm = () => ensureData().catch(() => {});
+    const kick = () => {
+      if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 2500 });
+      else warm();
+    };
+    setTimeout(kick, 1200);
+  }
 
   const MODE_LABELS = {
     mode_urgent: '刚离职 · 速返优先',
@@ -25,11 +64,37 @@
     const l = document.getElementById('loader'); if (!l) return;
     l.classList.add('done'); setTimeout(() => l.remove(), 500);
   }
-  document.addEventListener('DOMContentLoaded', () => setTimeout(hideLoader, 650));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(hideLoader, 350));
   window.addEventListener('load', () => setTimeout(hideLoader, 200));
   setTimeout(hideLoader, 4000);
 
   const screens = { cover: $('#sc-cover'), quiz: $('#sc-quiz'), computing: $('#sc-computing'), result: $('#sc-result'), report: $('#sc-report') };
+
+  /* ---------- 支付订单兜底（Cookie + localStorage 双写）
+     Safari 从支付宝返回时可能是新标签，无痕模式/存储清理会让 localStorage 为空；
+     host-only 的 Lax Cookie 在顶级回跳导航中一定会带上，因此再存一份。 ---------- */
+  const ORDER_TTL_MS = 15 * 60 * 1000; // 与支付宝 timeout_express(15m) 对齐
+  function readCookie(name) {
+    try {
+      const raw = document.cookie || '';
+      for (const part of raw.split(';')) {
+        const i = part.indexOf('=');
+        if (i < 0) continue;
+        if (part.slice(0, i).trim() !== name) continue;
+        return decodeURIComponent(part.slice(i + 1).trim());
+      }
+    } catch (_) { /* 忽略存储异常 */ }
+    return '';
+  }
+  function writeCookie(name, value, maxAgeSec) {
+    try {
+      const secure = location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSec}; SameSite=Lax${secure}`;
+    } catch (_) { /* 忽略存储异常 */ }
+  }
+  function deleteCookie(name) {
+    try { document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`; } catch (_) {}
+  }
 
   /* ---------- 状态 ---------- */
   const store = {
@@ -44,8 +109,26 @@
       } catch (_) { return null; }
     },
     /* 最近一次下单（用于支付回跳后没有带 out_trade_no 时兜底） */
-    saveOrder(o) { try { localStorage.setItem('rb_order', JSON.stringify(o)); } catch (_) {} },
-    getOrder() { try { return JSON.parse(localStorage.getItem('rb_order')); } catch (_) { return null; } },
+    saveOrder(o) {
+      try { localStorage.setItem('rb_order', JSON.stringify(o)); } catch (_) {}
+      if (o && o.outTradeNo) writeCookie('rb_order', `${o.outTradeNo}.${o.ts || Date.now()}`, Math.floor(ORDER_TTL_MS / 1000));
+    },
+    getOrder() {
+      let local = null;
+      try {
+        const r = JSON.parse(localStorage.getItem('rb_order'));
+        if (r && r.outTradeNo) local = r;
+      } catch (_) { /* 继续读 Cookie 兜底 */ }
+      let cookie = null;
+      const c = readCookie('rb_order');
+      if (c) {
+        const [outTradeNo, ts] = c.split('.');
+        if (/^CRB\d{17}$/.test(outTradeNo)) cookie = { outTradeNo, ts: Number(ts) || 0 };
+      }
+      if (local && cookie) return Number(cookie.ts) >= Number(local.ts || 0) ? cookie : local;
+      return local || cookie;
+    },
+    clearOrderCookie() { deleteCookie('rb_order'); },
     /* 解锁凭证：服务端签发的令牌（含 90 天有效期） */
     saveUnlock(u) { try { localStorage.setItem('rb_unlock', JSON.stringify(u)); } catch (_) {} },
     getUnlock() { try { return JSON.parse(localStorage.getItem('rb_unlock')); } catch (_) { return null; } },
@@ -135,6 +218,7 @@
   function goPrevQ() { if (currentQi > 0) { currentQi--; renderQuiz(true); } }
 
   function cityGroupsHtml(selected, term) {
+    const { CITIES = [], CITY_REGIONS = [] } = R;
     const t = String(term || '').trim();
     const list = t ? CITIES.filter(c => c.name.includes(t) || (c.label || '').includes(t)) : CITIES;
     if (!list.length) return '<p class="city-empty">没找到这个城市，换个关键词试试</p>';
@@ -325,6 +409,8 @@
         if (typeof o.add.selfBiz === 'boolean') profile.selfBiz = o.add.selfBiz;
       }
     });
+
+    const { JOBS = [], CITIES = [], CITY_TIER_RANK = {}, CITY_TIER_SALARY = {} } = R;
 
     const selectedCities = (profile.cities || [])
       .filter(n => n !== '不限城市')
@@ -810,8 +896,10 @@
     go('result');
     bindAvatar();
     refreshPrice();
-    RB_Poster.confetti(colors.accent);
-    requestAnimationFrame(() => RB_Poster.drawRadar($('#radar-canvas'), AXES.map(a => ({ val: r.norm[a.key], label: a.label })), colors.accent));
+    ensurePoster().then(() => {
+      RB_Poster.confetti(colors.accent);
+      requestAnimationFrame(() => RB_Poster.drawRadar($('#radar-canvas'), AXES.map(a => ({ val: r.norm[a.key], label: a.label })), colors.accent));
+    }).catch(() => {});
   }
 
   /* ---------- 海报 ---------- */
@@ -820,6 +908,7 @@
   function closeModal() { $('#poster-modal').classList.add('hidden'); unlockScroll(); }
   async function openPoster() {
     try {
+      await ensurePoster();
       const url = await RB_Poster.buildShare(result);
       imageKind = 'poster';
       const tEl = $('#toast'); tEl.classList.remove('show'); clearTimeout(toastTimer);
@@ -995,8 +1084,10 @@
   }
 
   /* ---------- 深度报告 ---------- */
-  function openReport() {
-    if (!result || !window.RB_Report) { toast('报告数据丢失，请重新测一次'); return; }
+  async function openReport() {
+    if (!result) { toast('报告数据丢失，请重新测一次'); return; }
+    try { await ensureReport(); } catch (_) { toast('报告模块加载失败，请检查网络后重试'); return; }
+    if (!window.RB_Report) { toast('报告数据丢失，请重新测一次'); return; }
     const body = $('#report-body');
     if (!body) return;
     body.innerHTML = window.RB_Report.build(result, { order: store.getOrder(), unlock: store.getUnlock() });
@@ -1231,6 +1322,7 @@
         avatarSrc = avatarEl.currentSrc || avatarEl.src || '';
         avatarEl.style.visibility = 'hidden'; // 截图留空，头像稍后由 Canvas 叠加
       }
+      try { await ensureHtmlToImage(); } catch (_) {}
       if (!window.htmlToImage) throw new Error('html-to-image 未加载');
 
       const w = Math.max(320, node.scrollWidth);
@@ -1255,6 +1347,7 @@
     } catch (e) {
       console.error('[report image]', e);
       try {
+        await ensurePoster();
         const summary = result.aiSummary || (window.RB_Report && window.RB_Report.localSummary(result)) || '';
         const url = await RB_Poster.buildReportCard(result, summary);
         imageKind = 'report-card';
@@ -1311,6 +1404,7 @@
         token: data.token,
         exp: parseTokenExp(data.token),
       });
+      store.clearOrderCookie();
       track('pay_success', { amount: data.amount || '', via: 'pay' });
       return true;
     } catch (e) {
@@ -1328,11 +1422,55 @@
     return false;
   }
 
+  /* 已付款但本机拿不到测过结果时的兜底提示：购买凭证已存本机，重测后可直接查看 */
+  function showPaidWithoutResult() {
+    go('cover');
+    const overlay = overlayShell(`
+      <div class="unlock-card">
+        <p class="unlock-kicker">PAYMENT RECEIVED</p>
+        <h3>支付已到账，报告数据不在本机</h3>
+        <p class="unlock-tip">购买凭证已记录在本机。请重新完成一次测评，完成后点「查看深度报告」即可直接打开，无需再次付款。</p>
+        <button id="paid-retest" class="btn btn-primary">重新测试</button>
+        <button id="paid-ok" class="btn btn-ghost">知道了</button>
+      </div>`, 'paid-no-result-overlay');
+    overlay.querySelector('#paid-ok').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#paid-retest').addEventListener('click', () => { overlay.remove(); restart(); });
+  }
+
+  /** 已确认付款后统一收尾：有结果直接开报告，无结果明确提示（不再静默回封面） */
+  function restoreSoldReport(message) {
+    if (result) {
+      renderResult();
+      toast(message);
+      openReport();
+      return;
+    }
+    showPaidWithoutResult();
+  }
+
+  /* 静默核单：没有回跳参数时（原标签恢复 / 新标签打开）用本机订单兜底 */
+  let pendingCheckAt = 0;
+  async function checkPendingOrder() {
+    if (store.isUnlocked()) return false;
+    const o = store.getOrder();
+    const ts = Number(o?.ts || 0);
+    if (!o?.outTradeNo || !ts || Date.now() - ts > ORDER_TTL_MS) return false;
+    if (Date.now() - pendingCheckAt < 5000) return false; // 页面切换时避免重复查单
+    pendingCheckAt = Date.now();
+    const ok = await verifyOrder(o.outTradeNo);
+    if (!ok) return false;
+    const last = store.getLast();
+    if (last) result = last;
+    restoreSoldReport('已确认付款，深度报告解锁完成');
+    return true;
+  }
+
+  /** 处理支付宝同步回跳；返回 true 表示本次 URL 已带回跳参数 */
   async function handlePayReturn() {
     const params = new URLSearchParams(location.search);
     const payReturn = params.get('pay_return') === '1';
     const canceled = params.get('pay_cancel') === '1';
-    if (!payReturn && !canceled) return;
+    if (!payReturn && !canceled) return false;
 
     const outTradeNo = params.get('out_trade_no') || store.getOrder()?.outTradeNo || '';
     const last = store.getLast();
@@ -1340,9 +1478,16 @@
     cleanPayQuery();
 
     if (canceled) {
+      // 支付宝走 quit_url 不一定代表未付款：先核一次，未到账再提示取消
+      const paid = outTradeNo ? await verifyOrder(outTradeNo) : false;
+      if (paid) { restoreSoldReport('支付成功，深度报告已解锁'); return true; }
       toast('已取消支付');
       if (result) renderResult(); else initCover();
-      return;
+      // 后台再核一次，避免「已付款但同步延迟」被误判为取消
+      if (outTradeNo) {
+        verifyOrderWithRetry(outTradeNo, 2).then(ok => { if (ok) restoreSoldReport('支付成功，深度报告已解锁'); });
+      }
+      return true;
     }
 
     const overlay = overlayShell(`
@@ -1354,24 +1499,16 @@
     const ok = outTradeNo ? await verifyOrderWithRetry(outTradeNo) : false;
     overlay.remove();
 
-    if (ok) {
-      if (result) {
-        renderResult();
-        toast('支付成功，深度报告已解锁');
-        openReport();
-      } else {
-        go('cover');
-        toast('支付成功，但本机已无测试结果，请重新测试后查看报告');
-      }
-      return;
-    }
+    if (ok) { restoreSoldReport('支付成功，深度报告已解锁'); return true; }
 
     toast('暂未查到支付成功；若已扣款，请点「解锁深度报告」再核实一次');
     if (result) renderResult(); else initCover();
+    return true;
   }
 
   async function doShare() {
     const shareUrl = location.href.split('#')[0];
+    try { await ensurePoster(); } catch (_) { toast('分享模块加载失败，请检查网络后重试'); return; }
     const ok = await RB_Poster.share(`${result.arc.cn} · 重启人格图鉴`, `测出我是「${result.arc.cn}」，你是哪种重启者？快来测👉${shareUrl}`);
     track('poster_share', { ok });
     toast(ok ? '链接已复制，去发朋友圈吧' : '复制失败，请手动复制地址栏链接');
@@ -1382,7 +1519,24 @@
   function purgeDrafts() { for (const k in multiDraft) delete multiDraft[k]; for (const k in cityDraft) delete cityDraft[k]; }
 
   /* ---------- 事件绑定 ---------- */
-  $('#btn-start').addEventListener('click', () => { track('quiz_start'); currentQi = 0; go('quiz'); renderQuiz(false); });
+  $('#btn-start').addEventListener('click', async () => {
+    track('quiz_start');
+    const btn = $('#btn-start');
+    if (!R.CITIES || !R.JOBS) {
+      const old = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = '正在准备岗位库…';
+      try { await ensureData(); } catch (_) { toast('岗位库加载失败，请检查网络后重试'); }
+      btn.disabled = false;
+      btn.innerHTML = old;
+      if (!R.CITIES || !R.JOBS) return;
+    }
+    currentQi = 0;
+    go('quiz');
+    renderQuiz(false);
+    ensurePoster().catch(() => {});
+    ensureReport().catch(() => {});
+  });
   $('#btn-back').addEventListener('click', () => { answers = {}; purgeDrafts(); currentQi = 0; initCover(); go('cover'); });
   $('#cover-last').addEventListener('click', () => {
     const last = store.getLast();
@@ -1396,9 +1550,10 @@
   document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#poster-modal').classList.contains('hidden')) closeModal(); });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && result && screens.result.classList.contains('active')) {
-      loadInviteState();
-    }
+    if (document.visibilityState !== 'visible') return;
+    // 从支付宝切回原标签时不会有回跳参数，靠本机订单静默核单
+    if (!store.isUnlocked()) checkPendingOrder();
+    if (result && screens.result.classList.contains('active')) loadInviteState();
   });
 
   /* 记录来自分享链接的推荐人（好友完成测评后上报） */
@@ -1413,5 +1568,6 @@
   })();
 
   initCover();
-  handlePayReturn();
+  prefetchLazy();
+  handlePayReturn().then(handled => { if (!handled) checkPendingOrder(); });
 })();

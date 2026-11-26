@@ -12,16 +12,27 @@
   <meta name="theme-color" content="#0B0B14" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./css/style.css?v=37" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="./css/style.css?v=38" />
 </head>
 <body>
-  <!-- Google Tag Manager：dataLayer 前置初始化，容器脚本紧随其后 -->
-  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-K83M334T"></script>
+  <!-- Google Tag Manager：先建 dataLayer，等首屏空闲后再加载容器，避免抢首屏带宽 -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
+    (function lazyGtm() {
+      const load = () => {
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-K83M334T';
+        document.head.appendChild(s);
+      };
+      if ('requestIdleCallback' in window) setTimeout(() => requestIdleCallback(load, { timeout: 2500 }), 2500);
+      else setTimeout(load, 2500);
+    })();
   </script>
 
   <!-- 首屏加载层（关键样式内联，主样式未就绪也安全；JS 侧有移除兜底） -->
@@ -118,12 +129,7 @@
 
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <script src="./js/data.js?v=33"></script>
-  <script src="./js/cities.js?v=1"></script>
-  <script src="./js/jobs.js?v=1"></script>
-  <script src="./js/report.js?v=6"></script>
-  <script src="./js/poster.js?v=33"></script>
-  <script src="./js/vendor/html-to-image.min.js?v=1"></script>
-  <script src="./js/app.js?v=43"></script>
+  <script src="./js/data.js?v=34"></script>
+  <script src="./js/app.js?v=45"></script>
 </body>
 </html>

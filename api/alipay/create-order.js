@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       total_amount: PRICE,
       subject: SUBJECT,
       product_code: 'QUICK_WAP_WAY',         // 手机网站支付固定值
-      quit_url: (process.env.ALIPAY_QUIT_URL || `${SITE_URL}/`).trim(), // 用户中途退出返回
+      quit_url: (process.env.ALIPAY_QUIT_URL || `${SITE_URL}/api/alipay/return?quit=1`).trim(),
       timeout_express: '15m',
     },
   };
@@ -34,6 +34,11 @@ export default async function handler(req, res) {
       throw new Error('网关未返回有效支付链接');
     }
     console.log('[alipay.create] order=%s archetype=%s', outTradeNo, (req.body || {}).archetype || '-');
+    // 兜底：回跳是顶级导航，Lax Cookie 一定带上；Safari 新标签/存储清理时前端据此核单
+    const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+    const secure = proto === 'https' || (!proto && SITE_URL.startsWith('https:')) ? '; Secure' : '';
+    res.setHeader('Set-Cookie',
+      `rb_order=${outTradeNo}.${Date.now()}; Path=/; Max-Age=900; SameSite=Lax${secure}`);
     return res.json({ payUrl, outTradeNo, amount: PRICE });
   } catch (err) {
     console.error('[alipay.create] pageExec error:', err.message);

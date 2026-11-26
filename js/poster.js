@@ -27,7 +27,7 @@ const RB_Poster = (() => {
     return lines;
   }
 
-  const FS = "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+  const FS = "system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif";
   const FD = "'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif";
 
   /* ---------- 雷达图（结果页） ----------
