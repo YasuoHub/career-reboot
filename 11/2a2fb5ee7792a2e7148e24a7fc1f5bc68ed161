@@ -1,0 +1,86 @@
+api/alipay/price.js
+  s_071766b390f65c::t_6f3e748249baa1 2-3
+docs/支付与变现现状.md
+  s_071766b390f65c::t_8a089a88d210b2 69
+  s_071766b390f65c::t_a63a0b08ee517d 9
+  s_071766b390f65c::t_ff700d3c4b8834 93
+  s_071766b390f65c::t_f73475dee934e7 20,28-30,33,35,40,77,95,100,103-105
+index.html
+  s_071766b390f65c::t_1a15096bd16fe2 135
+  s_071766b390f65c::t_6376873762dd89 134
+  s_071766b390f65c::t_291ce8fd40004b 6,8,10,19,78-79
+lib/alipay-orders.js
+  s_071766b390f65c::t_29ba7eb2eb252d 14
+  s_071766b390f65c::t_6cb2746b000786 49
+js/data.js
+  s_88739e2e3fe509::t_feb8ca1e143906 2-3
+  s_bcc5527e1dcba5::t_dde7af3b0b601e 165
+.gitignore
+  s_96e655de734f1f::t_3eaf9ba1e33973 6
+README.md
+  s_bcc5527e1dcba5::t_fe5e9f73f1c13f 13-17,74-85,102,107-108,110,112-116
+api/ai-summary.js
+  s_96e655de734f1f::t_fd12f04944f474 63-64
+api/alipay/close.js
+  s_96e655de734f1f::t_b7b27a9b2426aa 10-17
+api/alipay/refund.js
+  s_96e655de734f1f::t_9f3954a1017f35 10-19
+api/invite/claim.js
+  s_96e655de734f1f::t_6c2dc9983dfa7b 1,7-8
+api/invite/state.js
+  s_96e655de734f1f::t_b7a85c5bd87834 1-2,8-9
+css/style.css
+  s_bcc5527e1dcba5::t_5e9da34fe80c59 163-165,559-563
+js/app.js
+  s_071766b390f65c::t_cebb19db243167 20-21,101-102,157,161,165,169-170,175,178-180,521,557,667,694,755,766,774-776,886-887,893,997,1016
+js/poster.js
+  s_bcc5527e1dcba5::t_efd1c4f1bdeb1f 317,387
+js/report.js
+  s_bcc5527e1dcba5::t_9229d49d322729 156-157,159-161,361,375
+legal.html
+  s_96e655de734f1f::t_83cbc8e6e09413 80,86,88,103,131,134,139,141,160,169
+package.json
+  s_bcc5527e1dcba5::t_bfba84f9936f50 14-16
+vercel.json
+  s_071766b390f65c::t_4d348239e8a88f 4-6,9-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "112a2fb5ee7792a2e7148e24a7fc1f5bc68ed161",
+  "prompts": {},
+  "sessions": {
+    "s_071766b390f65c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff94a6e2-b838-4e85-aad5-e3e25c401dff",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    },
+    "s_88739e2e3fe509": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0628dbef-2fbc-402a-af31-35a656b1da18",
+        "model": "deepseek-v4.1-flash-1017"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    },
+    "s_96e655de734f1f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-acompact-4aa343e2d0b712ce",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    },
+    "s_bcc5527e1dcba5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f320dfb-3750-45ad-bfcf-75b5ac8786f4",
+        "model": "unknown"
+      },
+      "human_author": "lixiong <leox520@163.com>"
+    }
+  }
+}
