@@ -1,0 +1,13 @@
+密钥*/
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+.temp/
+.starFactory/
+.vercel/
+node_modules/
+*.log
+.alipay-sandbox.json
